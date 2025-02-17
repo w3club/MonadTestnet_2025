@@ -8,5 +8,10 @@
     "inquirer": "^8.2.4",
     "socks-proxy-agent": "^8.0.5",
     "winston": "^3.17.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "add": "node utils/wallet_aggregator.js",
+    "generate": "node utils/wallet_generator.js"
   }
 }
