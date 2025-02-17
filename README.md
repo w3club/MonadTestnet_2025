@@ -3,6 +3,8 @@
 Welcome to Monad Testnet, this script will help you to be well positioned for future Testnet launch implementing multi Faucet claim,
 Testnet Apps Interactions, Protocols, Contract Deployment, etc... All possible stuff related to Monad
 
+``` bash
+
 MonadTestnet/
 ├── actions/            # Action scripts (to be implemented)
 ├── faucets/            # Faucet-related scripts (to be implemented)
