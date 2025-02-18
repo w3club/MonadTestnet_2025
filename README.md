@@ -6,16 +6,36 @@ Testnet Apps Interactions, Protocols, Contract Deployment, etc... All possible s
 ``` bash
 
 MonadTestnet/
-├── actions/            # Action scripts (to be implemented)
-├── faucets/            # Faucet-related scripts (to be implemented)
-├── index.js            # Main entry point of the project
-├── package.json        # Dependency configuration and npm scripts
-├── proxies.txt         # List of proxies in format: socks5://login:pass@ip:port
-└── utils/              # Utilities and additional scripts
-    ├── chain.js              # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, etc.)
-    ├── wallet_aggregator.js  # Interactive script to add wallets
-    ├── wallet_generator.js   # Script to generate wallets
-    └── wallets.json          # JSON file that stores added wallets
+├── actions/
+│   ├── deploy_contract/
+│   │   ├── index.js                  # Contract compilation and deployment script
+│   │   ├── contracts.sol             # Solidity contracts (up to 10 simple contracts)
+│   │   ├── ABI.js                    # Exports only the ABI for a sample contract
+│   │   ├── launch.js                 # Deployment script for tokens
+│   │   └── NFTs/
+│   │       ├── deploy.js             # NFT deployment script
+│   │       └── nft.sol               # NFT collection contract
+│   ├── StakeStone/
+│   │   ├── index.js                  # StakeStone module main script (to be implemented)
+│   │   └── ABI.js                    # ABI definitions for StakeStone contracts (to be implemented)
+│   └── Multipli/
+│       ├── index.js                  # Multipli module main script (to be implemented)
+│       └── ABI.js                    # ABI definitions for Multipli contracts (to be implemented)
+├── faucets/
+│   ├── official_faucet/
+│   │   ├── claim.js                  # Script to claim tokens from the official faucet
+│   │   └── scripts/
+│   │       └── apis.js               # Script containing API calls for the official faucet (to be implemented)
+│   └── owlto_faucet                  # Owlto faucet script (to be implemented)
+├── index.js                          # Main entry point with interactive menu and child process execution
+├── package.json                      # Dependency configuration and npm scripts
+├── proxies.txt                       # List of proxies (format: socks5://login:pass@ip:port)
+└── utils/
+    ├── chain.js                    # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, etc.)
+    ├── wallet_aggregator.js        # Interactive wallet aggregation script
+    ├── wallet_generator.js         # Wallet generation script (to be implemented)
+    └── wallets.json                # JSON file storing wallet information
+
 
 ## Instructions
 

@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+const figlet = require('figlet');
+const inquirer = require('inquirer');
+const { spawn } = require('child_process');
+const colors = require('colors');
+const clear = require('console-clear');
+
+// Handle CTRL+C gracefully
+process.on('SIGINT', () => {
+  console.log('\nExiting...'.green);
+  process.exit(0);
+});
+
+// Function to pause and wait for ENTER
+async function pause() {
+  await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'continue',
+      message: 'Press ENTER to back main menu...',
+    },
+  ]);
+}
+
+// Function to run a child process interactively using spawn
+function runScript(scriptPath) {
+  return new Promise((resolve) => {
+    const child = spawn('node', [scriptPath], { stdio: 'inherit' });
+    child.on('close', () => {
+      resolve();
+    });
+  });
+}
+
+// Main menu function
+async function mainMenu() {
+  clear();
+
+  // Print title using figlet (only "MONAD")
+  const title = figlet.textSync('MONAD', { horizontalLayout: 'full' });
+  console.log(title.green);
+
+  // Print tagline separately
+  console.log('Script created by Naeaex'.green);
+  console.log('Follow me on X - x.com/naeaexeth - Github - github.com/Naeaerc20'.green);
+  console.log(); // blank line
+
+  // Display menu options
+  const { option } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'option',
+      message: 'Select an option:',
+      choices: [
+        { name: '1. Claim Faucet (coming soon..)', value: 'claimFaucet' },
+        { name: '2. Execute Swaps (coming soon...)', value: 'executeSwaps' },
+        { name: '3. Manage Liquidity (coming soon...)', value: 'manageLiquidity' },
+        { name: '4. Stake Assets (coming soon...)', value: 'stakeAssets' },
+        { name: '5. Deploy a Contract', value: 'deployContract' },
+        { name: '6. Deploy a Token', value: 'deployToken' },
+        { name: '7. Deploy NFT Collection', value: 'deployNFT' },
+        { name: '0. Exit', value: 'exit' },
+      ],
+    },
+  ]);
+
+  // Execute the selected option
+  switch (option) {
+    case 'claimFaucet':
+    case 'executeSwaps':
+    case 'manageLiquidity':
+    case 'stakeAssets':
+      console.log('Feature coming soon...'.green);
+      await pause();
+      break;
+
+    case 'deployContract':
+      console.log('Launching Deploy Contract...'.green);
+      await runScript('actions/deploy_contract/index.js');
+      await pause();
+      break;
+
+    case 'deployToken':
+      console.log('Launching Deploy Token...'.green);
+      await runScript('actions/deploy_contract/launch.js');
+      await pause();
+      break;
+
+    case 'deployNFT':
+      console.log('Launching Deploy NFT Collection...'.green);
+      await runScript('actions/deploy_contract/NFTs/deploy.js');
+      await pause();
+      break;
+
+    case 'exit':
+      console.log('Exiting...'.green);
+      process.exit(0);
+
+    default:
+      break;
+  }
+
+  // Re-show the menu after action is finished
+  mainMenu();
+}
+
+// Start the main menu
+mainMenu();
