@@ -35,7 +35,7 @@ function runScript(scriptPath) {
 // Main menu function
 async function mainMenu() {
   clear();
-
+  
   // Print title using figlet (only "MONAD")
   const title = figlet.textSync('MONAD', { horizontalLayout: 'full' });
   console.log(title.green);
@@ -55,7 +55,7 @@ async function mainMenu() {
         { name: '1. Claim Faucet (coming soon..)', value: 'claimFaucet' },
         { name: '2. Execute Swaps (coming soon...)', value: 'executeSwaps' },
         { name: '3. Manage Liquidity (coming soon...)', value: 'manageLiquidity' },
-        { name: '4. Stake Assets (coming soon...)', value: 'stakeAssets' },
+        { name: '4. Stake Assets', value: 'stakeAssets' },
         { name: '5. Deploy a Contract', value: 'deployContract' },
         { name: '6. Deploy a Token', value: 'deployToken' },
         { name: '7. Deploy NFT Collection', value: 'deployNFT' },
@@ -69,8 +69,30 @@ async function mainMenu() {
     case 'claimFaucet':
     case 'executeSwaps':
     case 'manageLiquidity':
-    case 'stakeAssets':
       console.log('Feature coming soon...'.green);
+      await pause();
+      break;
+
+    case 'stakeAssets':
+      // Nested prompt for stake assets option
+      const { stakeChoice } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'stakeChoice',
+          message: 'Where would you like to stake assets?',
+          choices: [
+            { name: '1. StakeStone', value: 'stakeStone' },
+            { name: '2. Multipli', value: 'multipli' },
+          ],
+        },
+      ]);
+      if (stakeChoice === 'stakeStone') {
+        console.log('Launching StakeStone...'.green);
+        await runScript('actions/StakeStone/index.js');
+      } else if (stakeChoice === 'multipli') {
+        console.log('Launching Multipli...'.green);
+        await runScript('actions/Multipli/index.js');
+      }
       await pause();
       break;
 
