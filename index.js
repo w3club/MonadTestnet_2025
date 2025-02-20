@@ -74,13 +74,17 @@ async function mainMenu() {
           message: 'Select Faucet:',
           choices: [
             { name: '1. Official Faucet', value: 'officialFaucet' },
-            { name: '2. Owlto Faucet (coming soon)', value: 'owltoFaucet' },
+            { name: '2. Morkie Faucet', value: 'morkieFaucet' },
+            { name: '3. Owlto Faucet (coming soon)', value: 'owltoFaucet' },
           ],
         },
       ]);
       if (faucetChoice === 'officialFaucet') {
         console.log('Launching Official Faucet...'.green);
         await runScript('faucets/official_faucet/claim.js');
+      } else if (faucetChoice === 'morkieFaucet') {
+        console.log('Launching Morkie Faucet...'.green);
+        await runScript('faucets/morkie_faucet/claim.js');
       } else {
         console.log('Owlto Faucet coming soon...'.green);
       }

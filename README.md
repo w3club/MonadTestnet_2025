@@ -8,13 +8,13 @@ Testnet Apps Interactions, Protocols, Contract Deployment, etc... All possible s
 MonadTestnet/
 ├── actions/
 │   ├── deploy_contract/
-│   │   ├── index.js                  # Contract compilation and deployment script
+│   │   ├── index.js                  # Main script for compiling and deploying simple contracts on testnet
 │   │   ├── contracts.sol             # Solidity contracts (up to 10 simple contracts)
 │   │   ├── ABI.js                    # Exports only the ABI for a sample contract
 │   │   ├── launch.js                 # Deployment script for tokens; prompts for token parameters
 │   │   └── NFTs/
-│   │       ├── deploy.js             # NFT deployment script
-│   │       └── nft.sol               # NFT collection contract
+│   │       ├── deploy.js             # Interactive NFT deployment script (prompts for collection name, ticket, and max supply)
+│   │       └── nft.sol               # NFT collection contract implementing basic functions (mint, burn, transfer, etc.)
 │   ├── StakeStone/
 │   │   ├── index.js                  # StakeStone module main script (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for StakeStone contracts (to be implemented)
@@ -27,14 +27,18 @@ MonadTestnet/
 │   │   ├── solve_captcha.py          # Python script to solve reCAPTCHA using 2Captcha
 │   │   └── scripts/
 │   │       └── apis.js               # Script containing API calls for the official faucet (to be implemented)
-│   └── owlto_faucet                 # Owlto faucet script (to be implemented)
+│   ├── morkie_faucet/
+│   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet; verifies Morkie NFT ownership and claims via API
+│   │   └── scripts/
+│   │       └── apis.js               # Script containing API calls for the Morkie faucet 
+│   └── owlto_faucet                  # Owlto faucet script (to be implemented)
 ├── index.js                          # Main entry point with interactive menu and child process execution
-├── package.json                      # Dependency configuration and npm scripts
+├── package.json                      # Dependency configuration and npm scripts for the project
 ├── proxies.txt                       # List of proxies (each line in the format: socks5://login:pass@ip:port)
 └── utils/
-    ├── chain.js                    # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, etc.)
-    ├── wallet_aggregator.js        # Interactive wallet aggregation script
-    ├── wallet_generator.js         # Wallet generation script (to be implemented)
+    ├── chain.js                    # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, explorers, etc.)
+    ├── wallet_aggregator.js        # Interactive script to add wallets and save them in wallets.json
+    ├── wallet_generator.js         # Wallet generation script (to be implemented or improved)
     └── wallets.json                # JSON file storing wallet information (id, address, privateKey)
 
 
@@ -54,4 +58,4 @@ Good Luck! :)
 
 ## Requieriments
 
-1. Set your 2CAPTCHA API on "solve_captcha.py" using "nano faucets/official_faucet/solve_captcha.py" - (currently officialfaucet no working at all)
+1. Set your 2CAPTCHA API on "solve_captcha.py" using "nano faucets/official_faucet/solve_captcha.py" - (currently official faucet no working at all)
