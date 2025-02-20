@@ -18,9 +18,18 @@ MonadTestnet/
 │   ├── StakeStone/
 │   │   ├── index.js                  # StakeStone module main script (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for StakeStone contracts (to be implemented)
-│   └── Multipli/
-│       ├── index.js                  # Multipli module main script (handles token claims and asset staking)
-│       └── ABI.js                    # ABI definitions for Multipli contracts (to be implemented)
+│   ├── Multipli/
+│   │   ├── index.js                  # Multipli module main script (handles token claims and asset staking)
+│   │   └── ABI.js                    # ABI definitions for Multipli contracts (to be implemented)
+│   ├── Ambient-Finance/
+│   │   ├── index.js                  # Main script for Ambient-Finance module (to be implemented)
+│   │   └── ABI.js                    # ABI definitions for Ambient-Finance contracts (to be implemented)
+│   ├── stake_apr.io/
+│   │   ├── index.js                  # Main script for stake_apr.io module (handles staking & APR token operations)
+│   │   ├── ABI.js                    # ABI definitions for stake_apr.io contracts (implemented)
+│   │   ├── faucet.js                 # Faucet script for stake_apr.io (to be implemented)
+│   │   └── scripts/                  # Additional scripts for stake_apr.io (empty for now)
+│   └── NFTs-Mint/                   # Module for minting NFTs (empty for now)
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet
@@ -31,15 +40,15 @@ MonadTestnet/
 │   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet; verifies Morkie NFT ownership and claims via API
 │   │   └── scripts/
 │   │       └── apis.js               # Script containing API calls for the Morkie faucet 
-│   └── owlto_faucet                  # Owlto faucet script (to be implemented)
-├── index.js                          # Main entry point with interactive menu and child process execution
-├── package.json                      # Dependency configuration and npm scripts for the project
-├── proxies.txt                       # List of proxies (each line in the format: socks5://login:pass@ip:port)
+│   └── owlto_faucet                 # Owlto faucet script (to be implemented)
+├── index.js                         # Main entry point with interactive menu and child process execution
+├── package.json                     # Dependency configuration and npm scripts for the project
+├── proxies.txt                      # List of proxies (each line in the format: socks5://login:pass@ip:port)
 └── utils/
-    ├── chain.js                    # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, explorers, etc.)
-    ├── wallet_aggregator.js        # Interactive script to add wallets and save them in wallets.json
-    ├── wallet_generator.js         # Wallet generation script (to be implemented or improved)
-    └── wallets.json                # JSON file storing wallet information (id, address, privateKey)
+    ├── chain.js                   # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, explorers, etc.)
+    ├── wallet_aggregator.js       # Interactive script to add wallets and save them in wallets.json
+    ├── wallet_generator.js        # Wallet generation script (to be implemented or improved)
+    └── wallets.json               # JSON file storing wallet information (id, address, privateKey)
 
 
 ## Instructions
@@ -59,3 +68,8 @@ Good Luck! :)
 ## Requieriments
 
 1. Set your 2CAPTCHA API on "solve_captcha.py" using "nano faucets/official_faucet/solve_captcha.py" - (currently official faucet no working at all)
+
+## Notes
+
+1. "faucet.js" on "actions/stake_apr.io" (is not available yet)
+2. "index.js" on "MonadTestnet" still to be updated
