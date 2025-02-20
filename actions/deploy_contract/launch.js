@@ -144,7 +144,7 @@ inquirer
         const baseFee = block.baseFeePerGas ? block.baseFeePerGas : ethers.BigNumber.from(0);
         const maxFeePerGas = baseFee.mul(115).div(100);
         const maxPriorityFeePerGas = baseFee.mul(115).div(100);
-        const gasLimit = Math.floor(Math.random() * (750000 - 550000 + 1)) + 550000;
+        const gasLimit = Math.floor(Math.random() * (1500000 - 950000 + 1)) + 950000;
 
         const factory = new ethers.ContractFactory(tokenABI, tokenBytecode, wallet);
         const tokenContract = await factory.deploy(

@@ -11,7 +11,7 @@ MonadTestnet/
 │   │   ├── index.js                  # Contract compilation and deployment script
 │   │   ├── contracts.sol             # Solidity contracts (up to 10 simple contracts)
 │   │   ├── ABI.js                    # Exports only the ABI for a sample contract
-│   │   ├── launch.js                 # Deployment script for tokens
+│   │   ├── launch.js                 # Deployment script for tokens; prompts for token parameters
 │   │   └── NFTs/
 │   │       ├── deploy.js             # NFT deployment script
 │   │       └── nft.sol               # NFT collection contract
@@ -19,22 +19,23 @@ MonadTestnet/
 │   │   ├── index.js                  # StakeStone module main script (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for StakeStone contracts (to be implemented)
 │   └── Multipli/
-│       ├── index.js                  # Multipli module main script (to be implemented)
+│       ├── index.js                  # Multipli module main script (handles token claims and asset staking)
 │       └── ABI.js                    # ABI definitions for Multipli contracts (to be implemented)
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet
+│   │   ├── solve_captcha.py          # Python script to solve reCAPTCHA using 2Captcha
 │   │   └── scripts/
 │   │       └── apis.js               # Script containing API calls for the official faucet (to be implemented)
-│   └── owlto_faucet                  # Owlto faucet script (to be implemented)
+│   └── owlto_faucet                 # Owlto faucet script (to be implemented)
 ├── index.js                          # Main entry point with interactive menu and child process execution
 ├── package.json                      # Dependency configuration and npm scripts
-├── proxies.txt                       # List of proxies (format: socks5://login:pass@ip:port)
+├── proxies.txt                       # List of proxies (each line in the format: socks5://login:pass@ip:port)
 └── utils/
     ├── chain.js                    # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, etc.)
     ├── wallet_aggregator.js        # Interactive wallet aggregation script
     ├── wallet_generator.js         # Wallet generation script (to be implemented)
-    └── wallets.json                # JSON file storing wallet information
+    └── wallets.json                # JSON file storing wallet information (id, address, privateKey)
 
 
 ## Instructions
@@ -49,3 +50,8 @@ MonadTestnet/
 - npm run generate - (run utils/wallet_generator.js - allowing you to generate new addresses to participate in Monad Testnet)
 
 Good Luck! :)
+
+
+## Requieriments
+
+1. Set your 2CAPTCHA API on "solve_captcha.py" using "nano faucets/official_faucet/solve_captcha.py" - (currently officialfaucet no working at all)

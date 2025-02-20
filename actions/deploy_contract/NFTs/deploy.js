@@ -138,7 +138,7 @@ try {
       const baseFee = block.baseFeePerGas ? block.baseFeePerGas : ethers.BigNumber.from(0);
       const maxFeePerGas = baseFee.mul(115).div(100);
       const maxPriorityFeePerGas = baseFee.mul(115).div(100);
-      const gasLimit = Math.floor(Math.random() * (250000 - 150000 + 1)) + 150000;
+      const gasLimit = Math.floor(Math.random() * (850000 - 750000 + 1)) + 750000;
 
       const factory = new ethers.ContractFactory(nftABI, nftBytecode, wallet);
       const nftContract = await factory.deploy(

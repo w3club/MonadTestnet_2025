@@ -45,14 +45,14 @@ async function mainMenu() {
   console.log('Follow me on X - x.com/naeaexeth - Github - github.com/Naeaerc20'.green);
   console.log(); // blank line
 
-  // Display menu options
+  // Display main menu options
   const { option } = await inquirer.prompt([
     {
       type: 'list',
       name: 'option',
       message: 'Select an option:',
       choices: [
-        { name: '1. Claim Faucet (coming soon..)', value: 'claimFaucet' },
+        { name: '1. Claim Faucet', value: 'claimFaucet' },
         { name: '2. Execute Swaps (coming soon...)', value: 'executeSwaps' },
         { name: '3. Manage Liquidity (coming soon...)', value: 'manageLiquidity' },
         { name: '4. Stake Assets', value: 'stakeAssets' },
@@ -64,9 +64,29 @@ async function mainMenu() {
     },
   ]);
 
-  // Execute the selected option
   switch (option) {
     case 'claimFaucet':
+      // Nested prompt for faucet selection
+      const { faucetChoice } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'faucetChoice',
+          message: 'Select Faucet:',
+          choices: [
+            { name: '1. Official Faucet', value: 'officialFaucet' },
+            { name: '2. Owlto Faucet (coming soon)', value: 'owltoFaucet' },
+          ],
+        },
+      ]);
+      if (faucetChoice === 'officialFaucet') {
+        console.log('Launching Official Faucet...'.green);
+        await runScript('faucets/official_faucet/claim.js');
+      } else {
+        console.log('Owlto Faucet coming soon...'.green);
+      }
+      await pause();
+      break;
+
     case 'executeSwaps':
     case 'manageLiquidity':
       console.log('Feature coming soon...'.green);
@@ -121,10 +141,8 @@ async function mainMenu() {
     default:
       break;
   }
-
-  // Re-show the menu after action is finished
+  
   mainMenu();
 }
 
-// Start the main menu
 mainMenu();
