@@ -24,12 +24,12 @@ MonadTestnet/
 │   ├── Ambient-Finance/
 │   │   ├── index.js                  # Main script for Ambient-Finance module (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for Ambient-Finance contracts (to be implemented)
-│   ├── stake_apr.io/
+│   ├── Apriori/
 │   │   ├── index.js                  # Main script for stake_apr.io module (handles staking & APR token operations)
-│   │   ├── ABI.js                    # ABI definitions for stake_apr.io contracts (implemented)
-│   │   ├── faucet.js                 # Faucet script for stake_apr.io (to be implemented)
-│   │   └── scripts/                  # Additional scripts for stake_apr.io (empty for now)
-│   ├── NFTs-Mint/                   # Module for minting NFTs (empty for now)
+│   │   ├── ABI.js                    # ABI definitions for Apriori contracts (implemented)
+│   │   ├── faucet.js                 # Faucet script for Apriori (to be implemented)
+│   │   └── scripts/                  # Additional scripts for Apriori (empty for now)
+│   ├── NFTs-Mint/                    # Module for minting NFTs (empty for now)
 │   ├── BeanSwap/
 │   │   ├── ABI.js                    # Exports ABI definitions for Bean-Exchange & token + router contracts
 │   │   ├── swap.js                   # Interactive swap script with token approvals, dynamic gas settings, and support for wrapping/unwrapping MON/WMON as well as custom tokens
