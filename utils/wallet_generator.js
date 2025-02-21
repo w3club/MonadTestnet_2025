@@ -1,20 +1,24 @@
 const fs = require('fs');
 const ethers = require('ethers');
+const inquirer = require('inquirer');
+const path = require('path');
+
+const walletsFilePath = path.resolve(__dirname, 'wallets.json');
 
 const loadWallets = () => {
-    if (!fs.existsSync('wallets.json')) {
-        fs.writeFileSync('wallets.json', JSON.stringify([]));
+    if (!fs.existsSync(walletsFilePath)) {
+        fs.writeFileSync(walletsFilePath, JSON.stringify([]));
     }
-    const data = fs.readFileSync('wallets.json', 'utf-8');
+    const data = fs.readFileSync(walletsFilePath, 'utf-8');
     return JSON.parse(data);
 };
 
 const saveWallets = (wallets) => {
-    fs.writeFileSync('wallets.json', JSON.stringify(wallets, null, 2));
+    fs.writeFileSync(walletsFilePath, JSON.stringify(wallets, null, 2));
 };
 
 const generateWallets = async () => {
-    const answers = await require('inquirer').prompt([
+    const answers = await inquirer.prompt([
         {
             type: 'number',
             name: 'count',

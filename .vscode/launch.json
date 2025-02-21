@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/index.js",
+            "console": "integratedTerminal",
+            "runtimeArgs": ["--experimental-import-meta-resolve"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Wallet Generator",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/utils/wallet_generator.js",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Wallet Aggregator",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/utils/wallet_aggregator.js",
+            "console": "integratedTerminal"
+        }
+    ]
+}

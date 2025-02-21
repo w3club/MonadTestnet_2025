@@ -3,7 +3,6 @@ const path = require('path');
 const inquirer = require('inquirer');
 const ethers = require('ethers');
 
-// Ruta al archivo wallets.json en el mismo directorio
 const walletsFile = path.join(__dirname, 'wallets.json');
 
 const loadWallets = () => {
