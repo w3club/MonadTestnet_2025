@@ -29,25 +29,36 @@ MonadTestnet/
 │   │   ├── ABI.js                    # ABI definitions for stake_apr.io contracts (implemented)
 │   │   ├── faucet.js                 # Faucet script for stake_apr.io (to be implemented)
 │   │   └── scripts/                  # Additional scripts for stake_apr.io (empty for now)
-│   └── NFTs-Mint/                   # Module for minting NFTs (empty for now)
+│   ├── NFTs-Mint/                   # Module for minting NFTs (empty for now)
+│   ├── BeanSwap/
+│   │   ├── ABI.js                    # Exports ABI definitions for Bean-Exchange & token + router contracts
+│   │   ├── swap.js                   # Interactive swap script with token approvals, dynamic gas settings, and support for wrapping/unwrapping MON/WMON as well as custom tokens
+│   │   ├── liquidity.js              # To be Implemented – Script for managing liquidity operations (e.g., adding/removing liquidity)
+│   │   └── perps.js                  # To be Implemented – Script for handling perpetual contracts trading
+│   ├── Kintzu/
+│   │   ├── index.js                  # To be Implemented – Main script for the Kintzu module
+│   │   └── ABI.js                    # To be Implemented – ABI definitions for Kintzu contracts
+│   └── Synnax/
+│       ├── index.js                  # To be Implemented – Main script for the Synnax module
+│       └── ABI.js                    # To be Implemented – ABI definitions for Synnax contracts
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet
 │   │   ├── solve_captcha.py          # Python script to solve reCAPTCHA using 2Captcha
 │   │   └── scripts/
-│   │       └── apis.js               # Script containing API calls for the official faucet (to be implemented)
+│   │       └── apis.js               # To be Implemented – Script containing API calls for the official faucet
 │   ├── morkie_faucet/
-│   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet; verifies Morkie NFT ownership and claims via API
+│   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet; verifies NFT ownership and claims via API
 │   │   └── scripts/
-│   │       └── apis.js               # Script containing API calls for the Morkie faucet 
-│   └── owlto_faucet                 # Owlto faucet script (to be implemented)
+│   │       └── apis.js               # Script containing API calls for the Morkie faucet
+│   └── owlto_faucet                 # To be Implemented – Owlto faucet script
 ├── index.js                         # Main entry point with interactive menu and child process execution
 ├── package.json                     # Dependency configuration and npm scripts for the project
 ├── proxies.txt                      # List of proxies (each line in the format: socks5://login:pass@ip:port)
 └── utils/
     ├── chain.js                   # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, explorers, etc.)
     ├── wallet_aggregator.js       # Interactive script to add wallets and save them in wallets.json
-    ├── wallet_generator.js        # Wallet generation script (to be implemented or improved)
+    ├── wallet_generator.js        # To be Implemented – Wallet generation script (to be implemented or improved)
     └── wallets.json               # JSON file storing wallet information (id, address, privateKey)
 
 
