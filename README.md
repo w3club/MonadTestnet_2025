@@ -51,15 +51,20 @@ MonadTestnet/
 │   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet; verifies NFT ownership and claims via API
 │   │   └── scripts/
 │   │       └── apis.js               # Script containing API calls for the Morkie faucet
-│   └── owlto_faucet                 # To be Implemented – Owlto faucet script
-├── index.js                         # Main entry point with interactive menu and child process execution
-├── package.json                     # Dependency configuration and npm scripts for the project
-├── proxies.txt                      # List of proxies (each line in the format: socks5://login:pass@ip:port)
-└── utils/
-    ├── chain.js                   # Network configuration (RPC_URL, CHAIN_ID, SYMBOL, explorers, etc.)
-    ├── wallet_aggregator.js       # Interactive script to add wallets and save them in wallets.json
-    ├── wallet_generator.js        # To be Implemented – Wallet generation script (to be implemented or improved)
-    └── wallets.json               # JSON file storing wallet information (id, address, privateKey)
+│   ├── owlto_faucet                  # To be Implemented – Owlto faucet script
+│   └── faucet.trade/
+│       ├── add_data.js               # Interactive script to add credentials to credentials.json for the trade faucet module
+│       ├── captcha.js                # Script to handle captcha challenges for faucet trades using bestcaptchasolver
+│       ├── credentials.json          # JSON file storing credentials for the trade faucet (e.g., API keys, secrets)
+│       ├── index.js                  # Main script for the trade faucet module; handles trade-related faucet operations with a menu for New Wallets, Existing Wallets, Add Credentials, and Exit
+│       └── scripts/
+│           └── apis.js               # To be Implemented – Script containing API calls for the trade faucet
+├── index.js                          # Main entry point with interactive menu and child process execution
+├── package.json                      # Dependency configuration and npm scripts for the project
+├── proxies.txt                       # List of proxies (each line in the format: socks5://login:pass@ip:port)
+├── .gitignore                        # Git ignore file (specifies files and directories to ignore in version control)
+└── .vscode/
+    └── launch.json                   # VSCode launch configuration for debugging the project
 
 
 ## Instructions
@@ -79,8 +84,10 @@ Good Luck! :)
 ## Requieriments
 
 1. Set your 2CAPTCHA API on "solve_captcha.py" using "nano faucets/official_faucet/solve_captcha.py" - (currently official faucet no working at all)
+2. set your ACCESS_TOKEN on "captcha.js" using "nano faucets/faucet.trade/captcha.js" from BestCaptchaSolver Website - Here: https://bestcaptchasolver.com/account - Load some funds on your account = Done Example: https://prnt.sc/QgaLKInhRC3t
 
 ## Notes
 
 1. "faucet.js" on "actions/stake_apr.io" (is not available yet)
 2. "index.js" on "MonadTestnet" still to be updated
+3. I will make a tutorial how to create APIs for credentials.json to use Faucet.Trade script
