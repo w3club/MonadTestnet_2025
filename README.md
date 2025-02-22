@@ -84,10 +84,10 @@ Good Luck! :)
 ## Requieriments
 
 1. Set your 2CAPTCHA API on "solve_captcha.py" using "nano faucets/official_faucet/solve_captcha.py" - (currently official faucet no working at all)
-2. set your ACCESS_TOKEN on "captcha.js" using "nano faucets/faucet.trade/captcha.js" from BestCaptchaSolver Website - Here: https://bestcaptchasolver.com/account - Load some funds on your account = Done Example: https://prnt.sc/QgaLKInhRC3t
+2. Set your ACCESS_TOKEN on "captcha.js" using "nano faucets/faucet.trade/captcha.js" from BestCaptchaSolver Website - Here: https://bestcaptchasolver.com/account - Load some funds on your account = Done Example: https://prnt.sc/QgaLKInhRC3t
 
 ## Notes
 
-1. "faucet.js" on "actions/stake_apr.io" (is not available yet)
-2. "index.js" on "MonadTestnet" still to be updated
+1. "faucet.js" on "actions/Apriori" (is not available yet)
+2. "index.js" on "MonadTestnet" still to be updated (to add Apriori usage & Multipli)
 3. I will make a tutorial how to create APIs for credentials.json to use Faucet.Trade script
