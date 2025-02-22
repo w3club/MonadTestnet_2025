@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const figlet = require('figlet');
 const inquirer = require('inquirer');
 const { spawn } = require('child_process');
@@ -76,6 +75,7 @@ async function mainMenu() {
             { name: '1. Official Faucet', value: 'officialFaucet' },
             { name: '2. Morkie Faucet', value: 'morkieFaucet' },
             { name: '3. Owlto Faucet (coming soon)', value: 'owltoFaucet' },
+            { name: '4. Faucet Trade', value: 'faucetTrade' },
           ],
         },
       ]);
@@ -85,6 +85,9 @@ async function mainMenu() {
       } else if (faucetChoice === 'morkieFaucet') {
         console.log('Launching Morkie Faucet...'.green);
         await runScript('faucets/morkie_faucet/claim.js');
+      } else if (faucetChoice === 'faucetTrade') {
+        console.log('Launching Faucet Trade...'.green);
+        await runScript('faucets/faucet.trade/index.js');
       } else {
         console.log('Owlto Faucet coming soon...'.green);
       }
