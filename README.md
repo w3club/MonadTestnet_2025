@@ -8,13 +8,13 @@ Testnet Apps Interactions, Protocols, Contract Deployment, etc... All possible s
 MonadTestnet/
 ├── actions/
 │   ├── deploy_contract/
-│   │   ├── index.js                  # Main script for compiling and deploying simple contracts on testnet
+│   │   ├── index.js                  # Main script to compile and deploy simple contracts on testnet
 │   │   ├── contracts.sol             # Solidity contracts (up to 10 simple contracts)
 │   │   ├── ABI.js                    # Exports only the ABI for a sample contract
 │   │   ├── launch.js                 # Deployment script for tokens; prompts for token parameters
 │   │   └── NFTs/
 │   │       ├── deploy.js             # Interactive NFT deployment script (prompts for collection name, ticket, and max supply)
-│   │       └── nft.sol               # NFT collection contract implementing basic functions (mint, burn, transfer, etc.)
+│   │       └── nft.sol               # NFT contract implementing basic functions (mint, burn, transfer, etc.)
 │   ├── StakeStone/
 │   │   ├── index.js                  # StakeStone module main script (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for StakeStone contracts (to be implemented)
@@ -29,36 +29,44 @@ MonadTestnet/
 │   │   ├── ABI.js                    # ABI definitions for Apriori contracts (implemented)
 │   │   ├── faucet.js                 # Faucet script for Apriori (to be implemented)
 │   │   └── scripts/                  # Additional scripts for Apriori (empty for now)
-│   ├── NFTs-Mint/                    # Module for minting NFTs (empty for now)
+│   ├── NFTs-Mint/                    # Module for minting NFTs
+│   │   ├── MagicEden/                # Scripts for MagicEden integration and NFT minting operations
+│   │   │   └── (files to be defined)
+│   │   └── Testnet.Free/             # Scripts for free NFT minting on testnet (for demos and testing)
 │   ├── BeanSwap/
 │   │   ├── ABI.js                    # Exports ABI definitions for Bean-Exchange & token + router contracts
 │   │   ├── swap.js                   # Interactive swap script with token approvals, dynamic gas settings, and support for wrapping/unwrapping MON/WMON as well as custom tokens
-│   │   ├── liquidity.js              # To be Implemented – Script for managing liquidity operations (e.g., adding/removing liquidity)
-│   │   └── perps.js                  # To be Implemented – Script for handling perpetual contracts trading
+│   │   ├── liquidity.js              # To be implemented – Script for managing liquidity operations (e.g., adding/removing liquidity)
+│   │   └── perps.js                  # To be implemented – Script for handling perpetual contracts trading
 │   ├── Kintzu/
-│   │   ├── index.js                  # To be Implemented – Main script for the Kintzu module
-│   │   └── ABI.js                    # To be Implemented – ABI definitions for Kintzu contracts
-│   └── Synnax/
-│       ├── index.js                  # To be Implemented – Main script for the Synnax module
-│       └── ABI.js                    # To be Implemented – ABI definitions for Synnax contracts
+│   │   ├── index.js                  # To be implemented – Main script for the Kintzu module
+│   │   └── ABI.js                    # To be implemented – ABI definitions for Kintzu contracts
+│   ├── Synnax/
+│   │   ├── index.js                  # To be implemented – Main script for the Synnax module
+│   │   └── ABI.js                    # To be implemented – ABI definitions for Synnax contracts
+│   └── Uniswap/                      # Module for Uniswap protocol operations
+│       ├── swap.js                   # Interactive swap script for Uniswap operations
+│       ├── ABI.js                    # Exports ABI definitions for Uniswap contracts
+│       └── scripts/
+│           └── apis.js               # Script with API calls for Uniswap-related operations
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet
 │   │   ├── solve_captcha.py          # Python script to solve reCAPTCHA using 2Captcha
 │   │   └── scripts/
-│   │       └── apis.js               # To be Implemented – Script containing API calls for the official faucet
+│   │       └── apis.js               # To be implemented – Script containing API calls for the official faucet
 │   ├── morkie_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet; verifies NFT ownership and claims via API
 │   │   └── scripts/
 │   │       └── apis.js               # Script containing API calls for the Morkie faucet
-│   ├── owlto_faucet                  # To be Implemented – Owlto faucet script
+│   ├── owlto_faucet                  # To be implemented – Owlto faucet script
 │   └── faucet.trade/
 │       ├── add_data.js               # Interactive script to add credentials to credentials.json for the trade faucet module
 │       ├── captcha.js                # Script to handle captcha challenges for faucet trades using bestcaptchasolver
 │       ├── credentials.json          # JSON file storing credentials for the trade faucet (e.g., API keys, secrets)
-│       ├── index.js                  # Main script for the trade faucet module; handles trade-related faucet operations with a menu for New Wallets, Existing Wallets, Add Credentials, and Exit
+│       ├── index.js                  # Main script for the trade faucet module; handles operations with a menu for New Wallets, Existing Wallets, Add Credentials, and Exit
 │       └── scripts/
-│           └── apis.js               # To be Implemented – Script containing API calls for the trade faucet
+│           └── apis.js               # To be implemented – Script containing API calls for the trade faucet
 ├── index.js                          # Main entry point with interactive menu and child process execution
 ├── package.json                      # Dependency configuration and npm scripts for the project
 ├── proxies.txt                       # List of proxies (each line in the format: socks5://login:pass@ip:port)

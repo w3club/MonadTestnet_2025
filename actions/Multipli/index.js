@@ -121,11 +121,13 @@ async function main() {
             maxFeePerGas,
             maxPriorityFeePerGas
           });
-          console.log(`🚀 Claim Tx Sent for token ${tokenTicket}: ${tx.hash}`.magenta);
+          console.log(`🚀 Claim Tx Sent for token ${tokenTicket}: ${chain.TX_EXPLORER}${tx.hash}`.magenta);
           const receipt = await tx.wait();
-          console.log(`✅ Claim Tx Confirmed for token ${tokenTicket}: ${receipt.transactionHash}`.magenta);
+          console.log(`✅ Claim Tx Confirmed for token ${tokenTicket}: ${chain.TX_EXPLORER}${receipt.transactionHash}`.magenta);
         } catch (error) {
-          if (error.message && error.message.includes("insufficient balance")) {
+          if (error.code === "CALL_EXCEPTION" || (error.message && error.message.includes("CALL_EXCEPTION"))) {
+            console.error(`❌ CALL_EXCEPTION: Transaction failed for wallet [${walletInfo.address}] on token ${tokenTicket}.`.red);
+          } else if (error.message && error.message.includes("insufficient balance")) {
             const balance = await wallet.getBalance();
             console.error(`❌ Wallet [${walletInfo.address}] is out of funds. Balance: ${ethers.utils.formatEther(balance)} ${chain.SYMBOL}`.red);
           } else {
@@ -140,7 +142,7 @@ async function main() {
     // Option 2: Stake Assets – stake 100% of the balance for each asset in each wallet
     const assets = [abiData.USDC_CONTRACT, abiData.USDT_CONTRACT];
     for (const walletInfo of selectedWallets) {
-      console.log(`\n💎 Staking assets for wallet: [${walletInfo.address}]`.green);
+      console.log(`\n💎 Staking assets for wallet - [${walletInfo.address}]`.green);
       const wallet = new ethers.Wallet(walletInfo.privateKey, provider);
       // Randomize asset order for staking
       const shuffledAssets = [...assets].sort(() => Math.random() - 0.5);
@@ -167,29 +169,71 @@ async function main() {
           console.log(`⚠️  No balance for token ${tokenTicket} in wallet [${walletInfo.address}].`.yellow);
           continue;
         }
-        console.log(`🪙 Staking 100% of balance for token ${tokenTicket}: ${balance.toString()}`.green);
+        
+        const formattedBalance = Number(ethers.utils.formatUnits(balance, 6)).toFixed(2);
+        console.log(`🪙  Staking 100% of balance for token ${tokenTicket} - [${formattedBalance}]`.green);
+
         if (!abiData.STAKE_CONTRACT || abiData.STAKE_CONTRACT === "") {
           console.log("⚠️  Stake contract not configured. Skipping staking for this asset.".yellow);
           continue;
         }
-        const stakeContract = new ethers.Contract(abiData.STAKE_CONTRACT, abiData.STAKE_ABI, wallet);
-        // Prepare gas settings
-        const block = await provider.getBlock('latest');
-        const baseFee = block.baseFeePerGas || ethers.BigNumber.from(0);
-        const maxFeePerGas = baseFee.mul(115).div(100);
-        const maxPriorityFeePerGas = baseFee.mul(115).div(100);
-        const gasLimit = randomInt(100000, 250000);
+
+        // Check allowance for the stake contract
+        let currentAllowance;
         try {
-          const tx = await stakeContract.stake(tokenAddress, balance, {
-            gasLimit,
-            maxFeePerGas,
-            maxPriorityFeePerGas
+          currentAllowance = await tokenContract.allowance(wallet.address, abiData.STAKE_CONTRACT);
+        } catch (err) {
+          console.error(`❌ Error checking allowance for token ${tokenTicket}: ${err.message}`.red);
+          continue;
+        }
+
+        if (currentAllowance.lt(balance)) {
+          console.log(`🔑 Approving STAKE_CONTRACT to spend token ${tokenTicket}...`.green);
+          const blockForApprove = await provider.getBlock('latest');
+          const baseFeeApprove = blockForApprove.baseFeePerGas || ethers.BigNumber.from(0);
+          const maxFeePerGasApprove = baseFeeApprove.mul(115).div(100);
+          const maxPriorityFeePerGasApprove = baseFeeApprove.mul(115).div(100);
+          const gasLimitApprove = randomInt(100000, 250000);
+          try {
+            const approveTx = await tokenContract.approve(abiData.STAKE_CONTRACT, ethers.constants.MaxUint256, {
+              gasLimit: gasLimitApprove,
+              maxFeePerGas: maxFeePerGasApprove,
+              maxPriorityFeePerGas: maxPriorityFeePerGasApprove
+            });
+            console.log(`🚀 Approval Tx Sent! For - ${tokenTicket}:`.magenta);
+            const approveReceipt = await approveTx.wait();
+            console.log(`✅ ${tokenTicket} Has been aproved to be used`.green);
+            await sleep(2000); // Wait 2 seconds after approval
+          } catch (error) {
+            if (error.code === "CALL_EXCEPTION" || (error.message && error.message.includes("CALL_EXCEPTION"))) {
+              console.error(`❌ CALL_EXCEPTION: Approval transaction failed for wallet [${walletInfo.address}] on token ${tokenTicket}.`.red);
+            } else {
+              console.error(`❌ Error approving token ${tokenTicket} for wallet [${walletInfo.address}]: ${error.message}`.red);
+            }
+            continue; // Skip staking for this token if approval fails
+          }
+        }
+
+        // Proceed to staking
+        const stakeContract = new ethers.Contract(abiData.STAKE_CONTRACT, abiData.STAKE_ABI, wallet);
+        const blockForStake = await provider.getBlock('latest');
+        const baseFeeStake = blockForStake.baseFeePerGas || ethers.BigNumber.from(0);
+        const maxFeePerGasStake = baseFeeStake.mul(115).div(100);
+        const maxPriorityFeePerGasStake = baseFeeStake.mul(115).div(100);
+        const gasLimitStake = randomInt(100000, 250000);
+        try {
+          const tx = await stakeContract.deposit(tokenAddress, balance, {
+            gasLimit: gasLimitStake,
+            maxFeePerGas: maxFeePerGasStake,
+            maxPriorityFeePerGas: maxPriorityFeePerGasStake
           });
-          console.log(`🚀 Stake Tx Sent for token ${tokenTicket}: ${tx.hash}`.magenta);
+          console.log(`🚀 Deposit Tx Sent! For - ${tokenTicket} - [${chain.TX_EXPLORER}${tx.hash}]`.magenta);
           const receipt = await tx.wait();
-          console.log(`✅ Stake Tx Confirmed: ${receipt.transactionHash}`.magenta);
+          console.log(`✅ Deposit Tx Confirmed in Block - [${receipt.blockNumber}]`.green);
         } catch (error) {
-          if (error.message && error.message.includes("insufficient balance")) {
+          if (error.code === "CALL_EXCEPTION" || (error.message && error.message.includes("CALL_EXCEPTION"))) {
+            console.error(`❌ CALL_EXCEPTION: Transaction failed for wallet [${walletInfo.address}] on token ${tokenTicket}.`.red);
+          } else if (error.message && error.message.includes("insufficient balance")) {
             const walletBalance = await wallet.getBalance();
             console.error(`❌ Wallet [${walletInfo.address}] is out of funds for staking. Balance: ${ethers.utils.formatEther(walletBalance)} ${chain.SYMBOL}`.red);
           } else {
