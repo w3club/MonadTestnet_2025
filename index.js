@@ -34,7 +34,7 @@ function runScript(scriptPath) {
 // Main menu function
 async function mainMenu() {
   clear();
-  
+
   // Print title using figlet (only "MONAD")
   const title = figlet.textSync('MONAD', { horizontalLayout: 'full' });
   console.log(title.green);
@@ -65,7 +65,6 @@ async function mainMenu() {
 
   switch (option) {
     case 'claimFaucet':
-      // Nested prompt for faucet selection
       const { faucetChoice } = await inquirer.prompt([
         {
           type: 'list',
@@ -95,7 +94,6 @@ async function mainMenu() {
       break;
 
     case 'executeSwaps':
-      // Nested prompt for swap selection
       const { swapChoice } = await inquirer.prompt([
         {
           type: 'list',
@@ -122,24 +120,34 @@ async function mainMenu() {
       break;
 
     case 'stakeAssets':
-      // Nested prompt for stake assets option
       const { stakeChoice } = await inquirer.prompt([
         {
           type: 'list',
           name: 'stakeChoice',
           message: 'Where would you like to stake assets?',
           choices: [
-            { name: '1. StakeStone', value: 'stakeStone' },
-            { name: '2. Multipli', value: 'multipli' },
+            { name: '1. Multipli', value: 'multipli' },
+            { name: '2. Apriori', value: 'apriori' },
+            { name: '3. Kintzu', value: 'kintzu' }
           ],
         },
       ]);
-      if (stakeChoice === 'stakeStone') {
-        console.log('Launching StakeStone...'.green);
-        await runScript('actions/StakeStone/index.js');
-      } else if (stakeChoice === 'multipli') {
-        console.log('Launching Multipli...'.green);
-        await runScript('actions/Multipli/index.js');
+      switch (stakeChoice) {
+        case 'multipli':
+          console.log('Launching Multipli...'.green);
+          await runScript('actions/Multipli/index.js');
+          break;
+        case 'apriori':
+          console.log('Launching Apriori...'.green);
+          await runScript('actions/Apriori/index.js');
+          break;
+        case 'kintzu':
+          console.log('Launching Kintzu...'.green);
+          await runScript('actions/Kintzu/index.js');
+          break;
+        default:
+          console.log('Invalid option, coming soon...'.green);
+          break;
       }
       await pause();
       break;
@@ -169,7 +177,7 @@ async function mainMenu() {
     default:
       break;
   }
-  
+
   mainMenu();
 }
 

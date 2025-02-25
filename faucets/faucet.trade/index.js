@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const inquirer = require("inquirer");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -15,6 +14,7 @@ const PROXIES_FILE = path.join(__dirname, "../../proxies.txt");
 const CREDENTIALS_FILE = path.join(__dirname, "credentials.json");
 const ADD_CREDENTIALS_SCRIPT = path.join(__dirname, "add_data.js");
 const WALLETS_FILE = path.join(__dirname, "../../utils/wallets.json");
+const TUTORIAL_FILE = path.join("faucets", "faucet.trade", "tutorial.txt");
 
 // Pause helper: wait for ENTER then clear console
 async function pause() {
@@ -95,7 +95,15 @@ function runAddCredentials() {
   });
 }
 
-// Función para guardar la wallet en wallets.json
+// Runs "cat" on the tutorial file to display API tutorial
+function showApiTutorial() {
+  return new Promise((resolve) => {
+    const child = spawn("cat", [TUTORIAL_FILE], { stdio: "inherit" });
+    child.on("close", resolve);
+  });
+}
+
+// Saves a wallet to wallets.json
 function saveWallet(wallet) {
   let wallets = [];
   if (fs.existsSync(WALLETS_FILE)) {
@@ -105,7 +113,6 @@ function saveWallet(wallet) {
       wallets = [];
     }
   }
-  // Asignar ID incremental o conservar el id ya asignado (para existentes)
   const newId = wallets.length > 0 ? wallets[wallets.length - 1].id + 1 : (wallet.id || 1);
   wallet.id = newId;
   wallets.push(wallet);
@@ -113,11 +120,10 @@ function saveWallet(wallet) {
   console.log(chalk.green(`💾 Wallet saved to wallets.json with id ${newId}\n`));
 }
 
-// Process faucet claim for a single wallet (wallet object & credential)
+// Process faucet claim for a single wallet
 async function claimFaucetFlow(wallet, cred) {
   const walletAddress = wallet.address;
   const proxies = readProxies();
-  // Seleccionar proxy basado en el id de la wallet (id 1 usa proxy[0], id 2 usa proxy[1], etc.)
   let proxy;
   if (wallet.id && proxies[wallet.id - 1]) {
     proxy = proxies[wallet.id - 1];
@@ -128,7 +134,6 @@ async function claimFaucetFlow(wallet, cred) {
   console.log(chalk.green(`🔄 Claiming faucet for wallet [${walletAddress}].`));
   console.log(chalk.green(`⚙️  Using Proxy - [${proxyId}]`));
 
-  // Crear cliente de Twitter
   const client = new TwitterApi({
     appKey: cred.api_key,
     appSecret: cred.api_secret_key,
@@ -145,7 +150,6 @@ async function claimFaucetFlow(wallet, cred) {
     const tweetUrl = `https://x.com/${username}/status/${tweetId}`;
     console.log(chalk.green(`✅ Tweet sent! with account [${username}] - Tweet Link is [${tweetUrl}]`));
 
-    // Llamar a faucet
     const faucetResponse = await requestFaucet(
       captchaSolution,
       tweetUrl,
@@ -169,7 +173,6 @@ async function claimFaucetFlow(wallet, cred) {
       console.log(chalk.green(`🎉 Faucet Successfully Claimed for Wallet - [${walletAddress}]`));
       console.log(chalk.green(`🔗 Tx Hash! - [${TX_EXPLORER}${txHash}]`));
 
-      // Si es una wallet nueva (con privateKey), se guarda en wallets.json
       if (wallet.privateKey) {
         saveWallet({ id: wallet.id, address: wallet.address, privateKey: wallet.privateKey });
       }
@@ -179,13 +182,13 @@ async function claimFaucetFlow(wallet, cred) {
   } catch (err) {
     console.log(chalk.green(`❌ Error claiming faucet for Wallet [${walletAddress}]: ${err.message || err}\n`));
   }
-  // Esperar 0.5 segundos antes de continuar
   await new Promise(resolve => setTimeout(resolve, 500));
 }
 
 // Main menu for faucet.trade
 async function mainMenu() {
   clear();
+  const credentials = readCredentials();
   const { option } = await inquirer.prompt([
     {
       type: "list",
@@ -195,6 +198,7 @@ async function mainMenu() {
         { name: "1. New Wallets", value: "new" },
         { name: "2. Existing Wallets", value: "existing" },
         { name: "3. Add Credentials", value: "addCreds" },
+        { name: "4. How to add APIs", value: "howToAPIs" },
         { name: "0. Exit", value: "exit" }
       ]
     }
@@ -203,8 +207,6 @@ async function mainMenu() {
   switch (option) {
     case "new": {
       clear();
-      const credentials = readCredentials();
-      // Leer las wallets guardadas para asignar el siguiente ID
       let savedWallets = [];
       if (fs.existsSync(WALLETS_FILE)) {
         try {
@@ -216,10 +218,9 @@ async function mainMenu() {
       for (let i = 0; i < credentials.length; i++) {
         const nextId = savedWallets.length + 1;
         const wallet = ethers.Wallet.createRandom();
-        wallet.id = nextId; // asignar el id a la wallet nueva
+        wallet.id = nextId;
         console.log(chalk.green(`💳 [${wallet.address}] - Has been generated`));
         await claimFaucetFlow(wallet, credentials[i]);
-        // Actualizar savedWallets en caso de que se haya guardado la wallet
         if (fs.existsSync(WALLETS_FILE)) {
           savedWallets = JSON.parse(fs.readFileSync(WALLETS_FILE, "utf8"));
         }
@@ -228,25 +229,54 @@ async function mainMenu() {
     }
     case "existing": {
       clear();
-      const credentials = readCredentials();
+      let existingWallets = [];
+      if (fs.existsSync(WALLETS_FILE)) {
+        try {
+          existingWallets = JSON.parse(fs.readFileSync(WALLETS_FILE, "utf8"));
+        } catch (e) {
+          existingWallets = [];
+        }
+      }
+      if (existingWallets.length === 0) {
+        console.log(chalk.red("No wallets found in wallets.json."));
+        break;
+      }
       const { walletIds } = await inquirer.prompt([
         {
           type: "input",
           name: "walletIds",
-          message: chalk.green("Please insert the IDs of Wallets to claim Faucet (separated by spaces):")
+          message: chalk.green(`Please insert the IDs of up to ${credentials.length} Wallets to claim Faucet (separated by spaces):`)
         }
       ]);
-      const ids = walletIds.split(" ").map(id => Number(id));
-      const filteredCreds = credentials.filter(acc => ids.includes(acc.id) && acc.address);
-      for (let i = 0; i < filteredCreds.length; i++) {
-        console.log(chalk.green(`💳 Using Wallet - [${filteredCreds[i].address}]`));
-        await claimFaucetFlow({ id: filteredCreds[i].id, address: filteredCreds[i].address }, filteredCreds[i]);
+      const ids = walletIds
+        .split(" ")
+        .map(id => Number(id))
+        .filter(id => id > 0 && id <= credentials.length);
+      if(ids.length === 0) {
+        console.log(chalk.red("No valid wallet IDs provided."));
+        break;
+      }
+      const filteredWallets = existingWallets.filter(wallet => ids.includes(wallet.id));
+      for (let i = 0; i < filteredWallets.length; i++) {
+        console.log(chalk.green(`💳 Using Wallet - [${filteredWallets[i].address}]`));
+        // Get the corresponding credential from credentials.json by matching the id
+        const cred = credentials.find(acc => acc.id === filteredWallets[i].id);
+        if (!cred) {
+          console.log(chalk.red(`No credential found for wallet id ${filteredWallets[i].id}, skipping...`));
+          continue;
+        }
+        await claimFaucetFlow(filteredWallets[i], cred);
       }
       break;
     }
     case "addCreds": {
       console.log(chalk.green("🔑 Launching Add Credentials..."));
       await runAddCredentials();
+      break;
+    }
+    case "howToAPIs": {
+      console.log(chalk.green("📖 Showing tutorial on how to add APIs..."));
+      await showApiTutorial();
       break;
     }
     case "exit":

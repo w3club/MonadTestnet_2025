@@ -1,0 +1,22 @@
+The steps necessary to generate the APIs for using the faucet.trade bot are:
+
+1. Go to the website - "https://developer.x.com/en" - Log in with your X account (preferably use burner account) Example: https://prnt.sc/oZd9jAsJpLY2 
+
+2. Once started go to "https://developer.twitter.com/en/portal/dashboard" - Select "basic account" - https://prnt.sc/mxSXMOyAEQ3c
+
+Briefly describe the purposes of using your application (you can put anything or use ChatGPT or DeepSeek for a short text)
+
+3. Once started you will get your own application ID that you must configure to obtain your API keys
+
+- https://prnt.sc/763VxXK3ihaf
+- https://prnt.sc/CDBiQfqSUH7S
+- https://prnt.sc/kfOOE8_uyRU1 
+- https://prnt.sc/hDt4-sUYOSRq
+
+Set "https://localhost/callback" in "Callback URI / Redirect URL" and "https://example.com" on "Website URL".
+This setting will allow the API to interact with your X account
+
+4. Generate your API_KEY, API_SECRET_KEY, ACCESS_TOKEN & ACCESS_TOKEN_SECRET Example: "https://prnt.sc/dWItHNxZGSRn"
+Copy them and save them in "credentials.json". The main code of Faucet.Trade has option to add it directly without any manual effort.
+
+Start enjoying using this script
