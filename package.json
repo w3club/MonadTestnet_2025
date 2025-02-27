@@ -2,6 +2,7 @@
   "dependencies": {
     "@faker-js/faker": "^9.5.0",
     "@fingerprintjs/fingerprintjs": "^4.6.0",
+    "@kuru-labs/kuru-sdk": "^0.0.36",
     "axios": "^1.7.9",
     "bestcaptchasolver": "^1.1.6",
     "bestcaptchasolver-client": "^1.1.6",
