@@ -48,7 +48,7 @@ async function main() {
     for (const walletInfo of selectedWallets) {
       const { address, privateKey } = walletInfo;
       const randomAmount = (Math.random() * (parseFloat(maxStake) - parseFloat(minStake)) + parseFloat(minStake)).toFixed(3);
-      console.log(chalk.cyan(`\n💼 Using Wallet - [${address}]`));
+      console.log(chalk.cyan(`💼 Using Wallet - [${address}]`));
       console.log(chalk.green(`💰 Staking [${randomAmount} ${chain.SYMBOL}]`));
       const signer = new ethers.Wallet(privateKey, provider);
       const contractWithSigner = contract.connect(signer);

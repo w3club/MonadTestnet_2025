@@ -4,13 +4,11 @@ const { spawn } = require('child_process');
 const colors = require('colors');
 const clear = require('console-clear');
 
-// Handle CTRL+C gracefully
 process.on('SIGINT', () => {
   console.log('\nExiting...'.green);
   process.exit(0);
 });
 
-// Function to pause and wait for ENTER
 async function pause() {
   await inquirer.prompt([
     {
@@ -21,7 +19,6 @@ async function pause() {
   ]);
 }
 
-// Function to run a child process interactively using spawn
 function runScript(scriptPath) {
   return new Promise((resolve) => {
     const child = spawn('node', [scriptPath], { stdio: 'inherit' });
@@ -31,20 +28,14 @@ function runScript(scriptPath) {
   });
 }
 
-// Main menu function
 async function mainMenu() {
   clear();
-
-  // Print title using figlet (only "MONAD")
   const title = figlet.textSync('MONAD', { horizontalLayout: 'full' });
   console.log(title.green);
-
-  // Print tagline separately
   console.log('Script created by Naeaex'.green);
   console.log('Follow me on X - x.com/naeaexeth - Github - github.com/Naeaerc20'.green);
-  console.log(); // blank line
+  console.log();
 
-  // Display main menu options
   const { option } = await inquirer.prompt([
     {
       type: 'list',
@@ -106,8 +97,24 @@ async function mainMenu() {
         },
       ]);
       if (swapChoice === 'beanSwap') {
-        console.log('Launching BeanSwap...'.green);
-        await runScript('actions/BeanSwap/swap.js');
+        const { beanSwapMode } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'beanSwapMode',
+            message: 'Select swap mode for BeanSwap:',
+            choices: [
+              { name: '1. Manual Swaps', value: 'manual' },
+              { name: '2. Automatic Swaps', value: 'automatic' },
+            ],
+          },
+        ]);
+        if (beanSwapMode === 'manual') {
+          console.log('Launching Manual BeanSwap...'.green);
+          await runScript('actions/BeanSwap/swap.js');
+        } else {
+          console.log('Launching Automatic BeanSwap...'.green);
+          await runScript('actions/BeanSwap/random.js');
+        }
       } else {
         console.log('Ambient Finance coming soon...'.green);
       }
