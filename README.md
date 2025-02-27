@@ -49,11 +49,21 @@ MonadTestnet/
 │   ├── Synnax/
 │   │   ├── index.js                  # Main script for the Synnax module (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for Synnax contracts (to be implemented)
-│   └── Uniswap/                      # Module for Uniswap protocol operations
-│       ├── swap.js                   # Interactive swap script for Uniswap operations
-│       ├── ABI.js                    # Exports ABI definitions for Uniswap contracts
-│       └── scripts/
-│           └── apis.js               # API calls for Uniswap-related operations
+│   ├── Uniswap/                      # Module for Uniswap protocol operations
+│   │   ├── swap.js                   # Interactive swap script for Uniswap operations
+│   │   ├── ABI.js                    # Exports ABI definitions for Uniswap contracts
+│   │   └── scripts/
+│   │       └── apis.js               # API calls for Uniswap-related operations
+│   ├── KuruSwap/                     # New module for KuruSwap operations
+│   │   ├── ABI.js                    # Exports ABI definitions for KuruSwap contracts
+│   │   ├── swap.js                   # Script to perform token swaps on the KuruSwap platform
+│   │   ├── dev.js                    # Script for token launch and initial purchases on KuruSwap
+│   │   ├── launch.js                 # Script for token launch only on KuruSwap
+│   │   └── scripts/
+│   │       └── apis.js               # API calls to fetch parameter data for KuruSwap swap operations
+│   └── NostraFinance/                # New module for NostraFinance operations
+│       ├── ABI.js                    # Exports ABI definitions for NostraFinance contracts
+│       └── index.js                  # Main script for the NostraFinance module
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet
@@ -102,3 +112,5 @@ Good Luck! :)
 ## Notes
 
 1. Kintzu is added but can't unstake MON if someone knows what's the function corresponding to methodID: "0x30af6b2e" let me know so I can add unstake MON
+2. dev.js & launch.js on KuruSwap will be live very shortly
+3. NostraFinance currently just has available Deposit assets + Borrow (will be done shortly)
