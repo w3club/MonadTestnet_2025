@@ -1,3 +1,30 @@
+/*********************************************************************
+ * swap.js
+ *
+ * Performs a swap using anyToAnySwap.
+ *
+ * For calculatePriceOverRoute, we use:
+ *   - isBuy = false for MON → TOKEN swaps (selling MON)
+ *   - isBuy = true for TOKEN → MON swaps (selling token to get MON)
+ *
+ * The rate R (with 18 decimals) returned represents the full conversion rate:
+ *
+ *  • For MON → TOKEN: 1 MON = (R / 1e18) TOKEN (human units)
+ *  • For TOKEN → MON: 1 TOKEN = (R / 1e18) MON (human units)
+ *
+ * To ensure the correct _amount is sent to the router, if the token’s
+ * decimals are less than 18, we normalize the value by multiplying by 
+ * 10^(18 - token.decimals) (obtained dynamically via the decimals() function).
+ *
+ * Expected output is calculated as:
+ *  - If source is MON:
+ *       ExpectedOut (raw TOKEN) = (amountIn (raw MON) * R) / 1e18
+ *  - If target is MON:
+ *       ExpectedOut (raw MON) = (normalized amountIn (raw TOKEN scaled to 18) * R) / 1e36
+ *
+ * Then a 2% slippage is applied.
+ *********************************************************************/
+
 const inquirer = require("inquirer");
 const { ethers } = require("ethers");
 const chalk = require("chalk");
@@ -25,14 +52,21 @@ const { RPC_URL, TX_EXPLORER } = require("../../utils/chain");
 const wallets = require("../../utils/wallets.json");
 const { filterMarketPools } = require("./scripts/apis");
 
+// Now, we remove static decimals from tokenList:
 let tokenList = [
-  { symbol: "MON", contract: MON_ADDRESS, decimals: 18, native: true },
-  { symbol: "WMON", contract: WMON_ADDRESS, decimals: 18, native: false },
-  { symbol: "CHOG", contract: "0xe0590015a873bf326bd645c3e1266d4db41c4e6b", decimals: 6, native: false },
-  { symbol: "DAK", contract: "0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714", decimals: 6, native: false },
-  { symbol: "YAKI", contract: "0xfe140e1dCe99Be9F4F15d657CD9b7BF622270C50", decimals: 6, native: false },
-  { symbol: "Other", contract: null, decimals: null, native: false }
+  { symbol: "MON", contract: MON_ADDRESS, native: true },
+  { symbol: "WMON", contract: WMON_ADDRESS, native: false },
+  { symbol: "CHOG", contract: "0xe0590015a873bf326bd645c3e1266d4db41c4e6b", native: false },
+  { symbol: "DAK",  contract: "0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714", native: false },
+  { symbol: "YAKI", contract: "0xfe140e1dCe99Be9F4F15d657CD9b7BF622270C50", native: false },
+  { symbol: "Other", contract: null, native: false }
 ];
+
+async function getTokenDecimals(provider, tokenAddress) {
+  const token = new ethers.Contract(tokenAddress, STANDARD_TOKEN_ABI, provider);
+  const decimals = await token.decimals();
+  return decimals;
+}
 
 async function getERC20Data(provider, tokenAddress) {
   const token = new ethers.Contract(tokenAddress, STANDARD_TOKEN_ABI, provider);
@@ -61,10 +95,11 @@ async function getTokenBalance(provider, wallet, token) {
     return ethers.utils.formatEther(await provider.getBalance(wallet.address));
   } else {
     const contract = new ethers.Contract(token.contract, STANDARD_TOKEN_ABI, provider);
-    let formatted = ethers.utils.formatUnits(await contract.balanceOf(wallet.address), token.decimals);
-    if (token.symbol === "CHOG" || token.symbol === "DAK") {
-      // Adjust the value by dividing by 1e12 to show a human-readable balance
-      formatted = (parseFloat(formatted) / 1e12).toFixed(5);
+    let decimals = await getTokenDecimals(provider, token.contract);
+    let formatted = ethers.utils.formatUnits(await contract.balanceOf(wallet.address), decimals);
+    // For display, if token has 6 decimals, adjust for human-readability (optional)
+    if (decimals === 6) {
+      formatted = (parseFloat(formatted) / 1e0).toFixed(5);
     }
     return formatted;
   }
@@ -119,7 +154,7 @@ async function chooseTokens(provider) {
       { type: "input", name: "contract", message: "Enter token contract address:" }
     ]);
     const data = await getERC20Data(provider, contract);
-    sourceToken = { symbol: data.symbol, contract, decimals: data.decimals, native: false };
+    sourceToken = { symbol: data.symbol, contract, native: false };
   }
   const { targetTokenChoice } = await inquirer.prompt([
     {
@@ -135,13 +170,14 @@ async function chooseTokens(provider) {
       { type: "input", name: "contract", message: "Enter token contract address:" }
     ]);
     const data = await getERC20Data(provider, contract);
-    targetToken = { symbol: data.symbol, contract, decimals: data.decimals, native: false };
+    targetToken = { symbol: data.symbol, contract, native: false };
   }
   return { sourceToken, targetToken };
 }
 
 async function runSwap(provider, activeWallet) {
   clear();
+
   const { sourceToken, targetToken } = await chooseTokens(provider);
 
   const sourceBalanceBefore = await getTokenBalance(provider, activeWallet, sourceToken);
@@ -160,10 +196,23 @@ async function runSwap(provider, activeWallet) {
   ]);
 
   let amountIn;
-  if (sourceToken.native) {
+  // For MON, use 18 decimals; if target is MON (TOKEN → MON), force input to 18 decimals.
+  if (sourceToken.symbol === "MON") {
     amountIn = ethers.utils.parseEther(swapAmountInput);
+  } else if (targetToken.symbol === "MON") {
+    amountIn = ethers.utils.parseUnits(swapAmountInput, 18);
   } else {
-    amountIn = ethers.utils.parseUnits(swapAmountInput, sourceToken.decimals);
+    amountIn = ethers.utils.parseUnits(swapAmountInput, 18);
+  }
+
+  // Normalize amountIn for tokens with less than 18 decimals:
+  let sourceDecimals = 18;
+  if (!sourceToken.native) {
+    sourceDecimals = await getTokenDecimals(provider, sourceToken.contract);
+  }
+  if (sourceDecimals < 18) {
+    const factor = ethers.BigNumber.from("10").pow(18 - sourceDecimals);
+    amountIn = amountIn.mul(factor);
   }
 
   const pair = {
@@ -181,6 +230,7 @@ async function runSwap(provider, activeWallet) {
   }
 
   let poolAddress;
+  let routeIsInverted = false;
   if (poolResponse.data && poolResponse.data.length > 0) {
     poolAddress = poolResponse.data[0].market;
   } else {
@@ -198,6 +248,7 @@ async function runSwap(provider, activeWallet) {
     }
     if (poolResponseInverted.data && poolResponseInverted.data.length > 0) {
       poolAddress = poolResponseInverted.data[0].market;
+      routeIsInverted = true;
       console.log(chalk.green(`Using inverted route for pool query [${targetToken.symbol}/${sourceToken.symbol}]`));
     } else {
       console.error(chalk.red(`No route found for Pool [${sourceToken.symbol}/${targetToken.symbol}] or its inversion.`));
@@ -206,11 +257,9 @@ async function runSwap(provider, activeWallet) {
   }
   console.log(chalk.green("Pool address:"), poolAddress);
 
-  // Calculate minAmountOut (here we can use a proper estimator, but for now we default to 1)
-  // You can later integrate a price estimator or SDK method to get a more accurate value.
-  const _minAmountOut = ethers.BigNumber.from("1");
-
-  // Determine swap parameters
+  // For anyToAnySwap:
+  // When source is MON: isBuy = true, nativeSend = true.
+  // When target is MON: isBuy = false, nativeSend = false.
   let isBuy, nativeSend, debitToken, creditToken;
   if (sourceToken.symbol === "MON") {
     isBuy = [true];
@@ -236,6 +285,45 @@ async function runSwap(provider, activeWallet) {
     await approveTokenIfNeeded(activeWallet, targetToken.contract, amountIn, ROUTER_ADDRESS);
   }
 
+  // Use calculatePriceOverRoute with:
+  // For MON → TOKEN: isBuy = false.
+  // For TOKEN → MON: isBuy = true.
+  const kuruUtils = new ethers.Contract(KURU_UTILS_ADDRESS, KURU_UTILS_ABIS, provider);
+  let priceForOne;
+  try {
+    const utilsIsBuy = (sourceToken.symbol === "MON") ? [false] : (targetToken.symbol === "MON") ? [true] : [false];
+    priceForOne = await kuruUtils.calculatePriceOverRoute([poolAddress], utilsIsBuy);
+    console.log(chalk.magenta(`\nRate returned (uint256): ${priceForOne.toString()}`));
+  } catch (error) {
+    console.error(chalk.red("Error calling calculatePriceOverRoute:"), error);
+    return;
+  }
+
+  const ONE = ethers.constants.WeiPerEther;
+  let expectedOut; // Expected output in raw units
+  if (targetToken.symbol === "MON") {
+    // Swap: TOKEN → MON.
+    // Expected human MON = (amountIn (raw TOKEN, forced to 18) * R) / 1e18.
+    // => Raw MON = (amountIn * R) / 1e18.
+    expectedOut = amountIn.mul(priceForOne).div(ONE);
+  } else if (sourceToken.symbol === "MON") {
+    // Swap: MON → TOKEN.
+    // Expected human TOKEN = (amountIn (raw MON) * R) / 1e18.
+    // => Raw TOKEN = Expected human TOKEN * 10^(targetDecimals) but then normalized to 18 scale.
+    expectedOut = amountIn.mul(priceForOne).div(ONE);
+  } else {
+    expectedOut = ethers.BigNumber.from("0");
+  }
+
+  // Apply 2% slippage: multiply by 98/100.
+  const slippageFactor = ethers.BigNumber.from("85");
+  const slippageDivisor = ethers.BigNumber.from("100");
+  const expectedOutWithSlippage = expectedOut.mul(slippageFactor).div(slippageDivisor);
+
+  // For display, print expected amount in wei.
+  console.log(chalk.cyan(`[Expected Amount to Receive: ${targetToken.symbol} ${expectedOutWithSlippage.toString()} wei]`));
+
+  // Set up transaction parameters.
   const randomGasLimit = Math.floor(Math.random() * (280000 - 180000 + 1)) + 180000;
   const block = await provider.getBlock("latest");
   const baseFee = block.baseFeePerGas;
@@ -248,8 +336,8 @@ async function runSwap(provider, activeWallet) {
 
   const txOverrides = {
     gasLimit: randomGasLimit,
-    maxFeePerGas: maxFeePerGas,
-    maxPriorityFeePerGas: maxPriorityFeePerGas,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
     value: sourceToken.native ? amountIn : 0
   };
 
@@ -261,12 +349,12 @@ async function runSwap(provider, activeWallet) {
       debitToken,
       creditToken,
       amountIn,
-      _minAmountOut,
+      expectedOutWithSlippage,
       txOverrides
     );
     console.log(chalk.cyan(`Swap Tx sent! ${TX_EXPLORER}${tx.hash}`));
     const receipt = await tx.wait();
-    console.log(chalk.cyan(`Tx confirmed in block ${receipt.blockNumber}`));
+    console.log(chalk.magenta(`Tx confirmed in block ${receipt.blockNumber}`));
   } catch (error) {
     if (error.code === "CALL_EXCEPTION") {
       console.error(chalk.red("Swap transaction failed: CALL_EXCEPTION. Please check your inputs and try again."));

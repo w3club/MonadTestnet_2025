@@ -29,39 +29,41 @@ MonadTestnet/
 │   │   ├── ABI.js                    # ABI definitions for Apriori contracts (implemented)
 │   │   ├── faucet.js                 # Faucet script for Apriori (to be implemented)
 │   │   └── scripts/                  # Additional scripts for Apriori (empty for now)
-│   ├── NFTs-Mint/                    # Module for minting NFTs
-│   │   ├── MagicEden/                # Scripts for MagicEden integration and NFT minting operations
+│   ├── NFTs-Mint/                    
+│   │   ├── MagicEden/                
 │   │   │   ├── ABI.js                # ABI definitions for MagicEden integration (to be implemented)
 │   │   │   ├── index.js              # Main script for MagicEden NFT minting
 │   │   │   └── scripts/
 │   │   │       └── apis.js           # API calls for MagicEden integration
-│   │   └── Testnet.Free/             # Scripts for free NFT minting on testnet (for demos and testing)
+│   │   └── Testnet.Free/             
 │   │       ├── ABI.js                # ABI definitions for Testnet.Free minting (to be implemented)
 │   │       └── index.js              # Main script for Testnet.Free NFT minting
 │   ├── BeanSwap/
 │   │   ├── ABI.js                    # Exports ABI definitions for Bean-Exchange & token + router contracts
 │   │   ├── swap.js                   # Interactive swap script with token approvals, dynamic gas settings, and support for wrapping/unwrapping MON/WMON as well as custom tokens
 │   │   ├── liquidity.js              # To be implemented – Script for managing liquidity operations (e.g., adding/removing liquidity)
-│   │   └── perps.js                  # To be implemented – Script for handling perpetual contracts trading
+│   │   ├── perps.js                  # To be implemented – Script for handling perpetual contracts trading
+│   │   └── random.js                 # Random swap script for BeanSwap (automatically performs random swaps using BeanSwap protocols)
 │   ├── Kintzu/
 │   │   ├── index.js                  # Main script for the Kintzu module (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for Kintzu contracts (to be implemented)
 │   ├── Synnax/
 │   │   ├── index.js                  # Main script for the Synnax module (to be implemented)
 │   │   └── ABI.js                    # ABI definitions for Synnax contracts (to be implemented)
-│   ├── Uniswap/                      # Module for Uniswap protocol operations
+│   ├── Uniswap/
 │   │   ├── swap.js                   # Interactive swap script for Uniswap operations
 │   │   ├── ABI.js                    # Exports ABI definitions for Uniswap contracts
 │   │   └── scripts/
 │   │       └── apis.js               # API calls for Uniswap-related operations
-│   ├── KuruSwap/                     # New module for KuruSwap operations
+│   ├── KuruSwap/
 │   │   ├── ABI.js                    # Exports ABI definitions for KuruSwap contracts
 │   │   ├── swap.js                   # Script to perform token swaps on the KuruSwap platform
 │   │   ├── dev.js                    # Script for token launch and initial purchases on KuruSwap
 │   │   ├── launch.js                 # Script for token launch only on KuruSwap
+│   │   ├── random.js                 # Random swap script for KuruSwap (automatically performs random swaps on the KuruSwap platform)
 │   │   └── scripts/
 │   │       └── apis.js               # API calls to fetch parameter data for KuruSwap swap operations
-│   └── NostraFinance/                # New module for NostraFinance operations
+│   └── NostraFinance/
 │       ├── ABI.js                    # Exports ABI definitions for NostraFinance contracts
 │       └── index.js                  # Main script for the NostraFinance module
 ├── faucets/
@@ -88,7 +90,6 @@ MonadTestnet/
 ├── .gitignore                        # Specifies files/directories to ignore in git
 └── .vscode/
     └── launch.json                   # VSCode launch configuration for debugging
-
 
 ## Instructions
 

@@ -93,6 +93,7 @@ async function mainMenu() {
           choices: [
             { name: '1. BeanSwap', value: 'beanSwap' },
             { name: '2. Ambient Finance (coming soon...)', value: 'ambientFinance' },
+            { name: '3. KuruSwap', value: 'kuruSwap' },
           ],
         },
       ]);
@@ -114,6 +115,25 @@ async function mainMenu() {
         } else {
           console.log('Launching Automatic BeanSwap...'.green);
           await runScript('actions/BeanSwap/random.js');
+        }
+      } else if (swapChoice === 'kuruSwap') {
+        const { kuruSwapMode } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'kuruSwapMode',
+            message: 'Select swap mode for KuruSwap:',
+            choices: [
+              { name: '1. Manual Swaps', value: 'manual' },
+              { name: '2. Automatic Swaps', value: 'automatic' },
+            ],
+          },
+        ]);
+        if (kuruSwapMode === 'manual') {
+          console.log('Launching Manual KuruSwap...'.green);
+          await runScript('actions/KuruSwap/swap.js');
+        } else {
+          console.log('Launching Automatic KuruSwap...'.green);
+          await runScript('actions/KuruSwap/random.js');
         }
       } else {
         console.log('Ambient Finance coming soon...'.green);
