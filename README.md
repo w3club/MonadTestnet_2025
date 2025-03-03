@@ -4,7 +4,6 @@ Welcome to Monad Testnet, this script will help you to be well positioned for fu
 Testnet Apps Interactions, Protocols, Contract Deployment, etc... All possible stuff related to Monad
 
 ``` bash
-
 MonadTestnet/
 ├── actions/
 │   ├── deploy_contract/
@@ -30,7 +29,7 @@ MonadTestnet/
 │   │   ├── faucet.js                 # Faucet script for Apriori (to be implemented)
 │   │   └── scripts/                  # Additional scripts for Apriori (empty for now)
 │   ├── NFTs-Mint/                    
-│   │   ├── MagicEden/                
+│   │   ├── MagicEden/
 │   │   │   ├── ABI.js                # ABI definitions for MagicEden integration (to be implemented)
 │   │   │   ├── index.js              # Main script for MagicEden NFT minting
 │   │   │   └── scripts/
@@ -63,9 +62,13 @@ MonadTestnet/
 │   │   ├── random.js                 # Random swap script for KuruSwap (automatically performs random swaps on the KuruSwap platform)
 │   │   └── scripts/
 │   │       └── apis.js               # API calls to fetch parameter data for KuruSwap swap operations
-│   └── NostraFinance/
-│       ├── ABI.js                    # Exports ABI definitions for NostraFinance contracts
-│       └── index.js                  # Main script for the NostraFinance module
+│   ├── NostraFinance/
+│   │   ├── ABI.js                    # Exports ABI definitions for NostraFinance contracts
+│   │   └── index.js                  # Main script for the NostraFinance module
+│   ├── Nad.Fun/                      # Nad.Fun module
+│   │   ├── ABI.js                    # (To be created) Contains and exports the ABI definitions for Nad.Fun contracts
+│   │   ├── deploy.js                 # (To be created) Deployment script for Nad.Fun contracts on testnet
+│   │   └── swap.js                   # (To be created) Script to manage swap operations for the Nad.Fun module
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet
@@ -84,12 +87,22 @@ MonadTestnet/
 │       ├── index.js                  # Main script for the trade faucet module; handles menu for New Wallets, Existing Wallets, Add Credentials, How to add APIs, and Exit
 │       └── scripts/
 │           └── apis.js               # To be implemented – API calls for the trade faucet
+├── strategies/
+│   └── for_faucet/
+│       ├── help.txt                  # Help file with instructions on how to use the faucet
+│       ├── deploy.js                 # Script to compile and deploy the faucet contract on the testnet
+│       ├── faucetABI.json            # JSON file exporting the ABI definitions and deployed contract address for the Faucet contract
+│       ├── faucet.sol                # Solidity contract implementing faucet functionalities (deposit, withdrawal, whitelist management, and claims)
+│       └── transfers.js              # Script for interacting with the Faucet contract, handling fund transfers, claims, and whitelist management
 ├── index.js                          # Main entry point with interactive menu and child process execution
 ├── package.json                      # npm dependency configuration and scripts
 ├── proxies.txt                       # List of proxies (one per line in socks5://login:pass@ip:port format)
-├── .gitignore                        # Specifies files/directories to ignore in git
 └── .vscode/
     └── launch.json                   # VSCode launch configuration for debugging
+
+```
+
+``` bash
 
 ## Instructions
 
