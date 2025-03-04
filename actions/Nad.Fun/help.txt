@@ -53,5 +53,18 @@ HELP.TXT – Project Overview and File Descriptions
    • Usage: This file is used by snipe.js (and indirectly by dev.js) to prevent re-buying tokens already purchased,
      and to check TP/SL conditions for initiating sell orders.
 
+8. basicSwap.js
+   • Description: A basic swap utility that allows the user to perform simple buy or sell transactions using the protectBuy and protectSell functions.
+   • Workflow:
+     - Prompts for the wallet ID to use and then for the token contract address.
+     - Displays the selected wallet’s address and token symbol ("Token Found id").
+     - Prints the wallet’s current MON (native) balance and the token balance.
+     - Asks the user whether they want to buy or sell.
+     - Depending on the selection, prompts for the amount to transact.
+     - Before executing a swap, it verifies (via allowance) that the token is approved for the router; if not, it approves the token with MaxUint256.
+     - Executes the transaction (buy or sell) using the protectBuy or protectSell function with a random gas limit and adjusted fee settings.
+     - Finally, prints the updated wallet balances.
+   • Usage: Run this script to perform basic swap operations on the network.
+
 By reviewing this help file, you can understand the role of each file in the project and how to run the scripts for deployment, token sniping, and simulated swaps.
 

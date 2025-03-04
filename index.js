@@ -1,5 +1,5 @@
-const figlet = require('figlet');
 const inquirer = require('inquirer');
+const figlet = require('figlet');
 const { spawn } = require('child_process');
 const colors = require('colors');
 const clear = require('console-clear');
@@ -51,7 +51,8 @@ async function specificAppMenu() {
           { name: '1. Launch a Token', value: 'launchToken' },
           { name: '2. Execute Swaps', value: 'executeSwaps' },
           { name: '3. Snipe Tokens', value: 'snipeTokens' },
-          { name: '4. Launch a Token with Insider Txs', value: 'launchInsider' }
+          { name: '4. Launch a Token with Insider Txs', value: 'launchInsider' },
+          { name: '5. Swap Tokens [Basic Format]', value: 'basicSwap' }
         ]
       }
     ]);
@@ -71,6 +72,10 @@ async function specificAppMenu() {
       case 'launchInsider':
         console.log('Launching Token with Insider Txs...'.green);
         await runScript('actions/Nad.Fun/dev.js');
+        break;
+      case 'basicSwap':
+        console.log('Launching Basic Swap...'.green);
+        await runScript('actions/Nad.Fun/basicSwap.js');
         break;
       default:
         break;

@@ -12,23 +12,23 @@ const pLimit = require("p-limit");
 const chain = require("../../utils/chain.js");
 const wallets = require("../../utils/wallets.json");
 
-// Import factory contract details (FACTORY_CONTRACT and ABI)
-const { FACTORY_CONTRACT, ABI } = require("./ABI.js");
+// Import factory contract details (FACTORY_CONTRACT, ROUTER_CONTRACT and ABI)
+const { FACTORY_CONTRACT, ROUTER_CONTRACT, ABI } = require("./ABI.js");
 
 // Import API functions from the local scripts folder
 const { getTokenURI, getMetadataTokenURI } = require("./scripts/apis.js");
 
 // Deployment constants
-const DEFAULT_FEE = ethers.BigNumber.from("30000000000000000"); // e.g., 0.03 MON in wei
-const EXTRA_VALUE = ethers.utils.parseUnits("0.02", "ether"); // Extra 0.02 MON
-const MIN_INITIAL_PURCHASE = ethers.utils.parseUnits("3", "ether"); // Minimum 3 MON
+const DEFAULT_FEE = ethers.BigNumber.from("30000000000000000"); // 0.03 MON in wei
+const EXTRA_VALUE = ethers.utils.parseUnits("0.02", "ether");      // 0.02 MON extra
+const MIN_INITIAL_PURCHASE = ethers.utils.parseUnits("1", "ether"); // Minimum 1 MON
 
 // Buying transaction variables
 const MIN_BUY = ethers.utils.parseUnits("1", "ether");   // 1 MON
 const MAX_BUY = ethers.utils.parseUnits("1.3", "ether");   // 1.3 MON
 const MAX_TX_PER_WALLET = 1;  // Maximum transactions per wallet
 
-// Create a provider (common for deployment and buying)
+// Create a provider (for deployment and swaps)
 const provider = new ethers.providers.JsonRpcProvider(chain.RPC_URL);
 
 // Helper: generate random integer between min and max (inclusive)
@@ -55,7 +55,6 @@ async function downloadImage(url) {
   return { tempFileName, tempFilePath, fileType, fileSize: stats.size };
 }
 
-// Main function
 async function main() {
   // 1. Ask for the deployer wallet ID.
   const { deployWalletId } = await inquirer.prompt([
@@ -68,7 +67,7 @@ async function main() {
   ]);
   const deployWalletEntry = wallets.find(w => w.id === Number(deployWalletId));
   if (!deployWalletEntry) {
-    console.error(chalk.blue("❌ Wallet with the specified ID not found."));
+    console.error(chalk.green("❌ Wallet with the specified ID not found."));
     process.exit(1);
   }
   console.log(chalk.green(`✔ You have selected wallet [${deployWalletEntry.address}] for deployment.`));
@@ -101,7 +100,27 @@ async function main() {
       validate: value => (!isNaN(parseFloat(value)) && parseFloat(value) > 0) || "Enter a valid number greater than 0."
     }
   ]);
-  
+
+  // 3.1 Ask for buyer wallet IDs.
+  const { buyerWalletIDs } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "buyerWalletIDs",
+      message: chalk.blue("Enter wallet IDs for buying the deployed token (separated by spaces):"),
+      validate: value => {
+        const ids = value.split(/\s+/).map(Number);
+        if (ids.some(isNaN)) return "Please enter valid wallet IDs.";
+        return true;
+      }
+    }
+  ]);
+  const buyerIDs = buyerWalletIDs.split(/\s+/).map(Number);
+  const buyerWallets = wallets.filter(w => buyerIDs.includes(w.id));
+  if (buyerWallets.length === 0) {
+    console.error(chalk.green("❌ No valid buyer wallets found."));
+    process.exit(1);
+  }
+
   console.log(chalk.blue("⏳ Creating and uploading metadata..."));
   const metadataTokenURI = await getMetadataTokenURI(
     answers.tokenName,
@@ -113,7 +132,7 @@ async function main() {
 
   const amountIn = ethers.utils.parseUnits(answers.initialPurchase, "ether");
   if (amountIn.lt(MIN_INITIAL_PURCHASE)) {
-    console.error(chalk.blue(`❌ Initial purchase must be at least 3 MON. Provided: ${answers.initialPurchase} MON`));
+    console.error(chalk.green(`❌ Initial purchase must be at least 1 MON. Provided: ${answers.initialPurchase} MON`));
     process.exit(1);
   }
 
@@ -128,6 +147,8 @@ async function main() {
 
   // Calculate total value: amountIn + DEFAULT_FEE + EXTRA_VALUE
   const totalValue = amountIn.add(DEFAULT_FEE).add(EXTRA_VALUE);
+
+  // Call createCurve (payable) to deploy the token.
   const tx = await factoryContract.createCurve(
     deployWallet.address,
     answers.tokenName,
@@ -145,58 +166,48 @@ async function main() {
   console.log(chalk.green(`🚀 Deploy Tx Hash Sent! - [${chain.TX_EXPLORER}${tx.hash}]`));
   const receipt = await tx.wait();
   console.log(chalk.green(`✅ Tx Confirmed in Block - [${receipt.blockNumber}]`));
-  console.log(chalk.green("🎉 Token Successfully Deployed"));
 
-  // Retrieve deployed token address (assumes the token address is the second element in the return tuple)
-  const deployedToken = receipt.args ? receipt.args.token : null;
+  // Retrieve deployed token address from the first Transfer event (mint)
+  // Se asume que se emite un evento Transfer con "from" igual a 0x000...0
+  const transferSignature = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  const mintEvent = receipt.events.find(e =>
+    e.topics &&
+    e.topics[0] === transferSignature &&
+    e.topics[1] === "0x0000000000000000000000000000000000000000000000000000000000000000"
+  );
+  const deployedToken = mintEvent ? mintEvent.address : null;
   if (!deployedToken) {
-    console.error(chalk.blue("❌ Could not retrieve the deployed token address from the transaction receipt."));
+    console.error(chalk.green("❌ Could not retrieve the deployed token address from the transaction receipt."));
     process.exit(1);
   }
-  console.log(chalk.green(`Deployed Token Address: ${deployedToken}`));
+  console.log(chalk.green(`🎉 Token Successfully Deployed: ${deployedToken}`));
 
-  // 4. Now, ask for buyer wallet IDs (for buying the deployed token)
-  const { buyerWalletIDs } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "buyerWalletIDs",
-      message: chalk.blue("Enter wallet IDs for buying the deployed token (separated by spaces):"),
-      validate: value => {
-        const ids = value.split(/\s+/).map(Number);
-        if (ids.some(isNaN)) return "Please enter valid wallet IDs.";
-        return true;
-      }
-    }
-  ]);
-  const buyerIDs = buyerWalletIDs.split(/\s+/).map(Number);
-  const buyerWallets = wallets.filter(w => buyerIDs.includes(w.id));
-  if (buyerWallets.length === 0) {
-    console.error(chalk.blue("❌ No valid buyer wallets found."));
-    process.exit(1);
-  }
-
-  // Process buying transactions concurrently (up to 10 at a time)
-  const limit = pLimit(10);
+  // Process buying transactions concurrently (up to 10 wallets at a time)
+  const pLimitInstance = pLimit(10);
   const buyPromises = buyerWallets.map(wallet =>
-    limit(async () => {
+    pLimitInstance(async () => {
       for (let i = 0; i < MAX_TX_PER_WALLET; i++) {
-        const buyAmount = getRandomBuyAmount(); // random between MIN_BUY and MAX_BUY
-        const fee = buyAmount.mul(1).div(100); // Fee = 1% of buyAmount
+        // Generate a random buy amount between MIN_BUY and MAX_BUY
+        const randomBuyAmount = ethers.utils.parseUnits(
+          (Math.random() * (1.3 - 1) + 1).toFixed(4),
+          "ether"
+        );
+        const fee = randomBuyAmount.mul(1).div(100); // 1% fee
         const amountOutMin = 0;
         const to = wallet.address;
         const deadline = Math.floor(Date.now() / 1000) + 6 * 3600;
-        const totalValue = buyAmount.add(fee);
-        const randomGasLimit = Math.floor(Math.random() * (380000 - 280000 + 1)) + 280000;
-        const provider = new ethers.providers.JsonRpcProvider(chain.RPC_URL);
-        const signer = new ethers.Wallet(wallet.privateKey, provider);
-        const routerContract = new ethers.Contract(ROUTER_CONTRACT, ABI, signer);
+        const totalValue = randomBuyAmount.add(fee);
+        const randomGasLimit = getRandomInt(280000, 380000);
         const latestBlock = await provider.getBlock("latest");
         const adjustedFee = latestBlock.baseFeePerGas.mul(105).div(100);
-        
+
+        const signer = new ethers.Wallet(wallet.privateKey, provider);
+        // Usamos la constante ROUTER_CONTRACT importada desde ABI.js
+        const routerContract = new ethers.Contract(ROUTER_CONTRACT, ABI, signer);
         try {
-          console.log(`Insider ID - [${wallet.id}] is buying the deployed token...`);
+          console.log(chalk.blue(`Insider ID - [${wallet.id}] is buying the deployed token...`));
           const tx = await routerContract.protectBuy(
-            buyAmount,
+            randomBuyAmount,
             amountOutMin,
             fee,
             deployedToken,
@@ -209,16 +220,19 @@ async function main() {
               maxPriorityFeePerGas: adjustedFee
             }
           );
-          console.log(`Tx Sent! - [${chain.TX_EXPLORER}${tx.hash}]`);
-          const receipt = await tx.wait();
-          console.log(`Tx Confirmed in Block - [${receipt.blockNumber}] for Wallet [${wallet.address}]`);
+          console.log(chalk.green(`Tx Sent: [${chain.TX_EXPLORER}${tx.hash}]`));
+          const txReceipt = await tx.wait();
+          console.log(chalk.green(`Tx Confirmed in Block [${txReceipt.blockNumber}] for Wallet [${wallet.address}]`));
         } catch (error) {
-          console.log(`❌ Error in buying for wallet [${wallet.address}]: ${error}`);
+          console.log(chalk.green(`❌ Error in buying for wallet [${wallet.address}]: ${error}`));
         }
       }
     })
   );
   await Promise.all(buyPromises);
+
+  // Finalizamos el script una vez confirmadas las transacciones de compra.
+  process.exit(0);
 }
 
-main();
+main().catch(console.error);

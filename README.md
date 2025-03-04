@@ -69,6 +69,7 @@ MonadTestnet/
 │   ├── Nad.Fun/                     # Nad.Fun module
 │   │   ├── ABI.js                    # Contains and exports the ABI definitions for Nad.Fun contracts.
 │   │   ├── deploy.js                 # Deployment script for Nad.Fun contracts on testnet.
+│   │   ├── basicSwap.js              # Basic swap script prompting for all required swap details.
 │   │   ├── dev.js                    # Script for token deployment and insider buying transactions.
 │   │   ├── snipe.js                  # Script that continuously monitors for recently launched tokens to auto buy/sell.
 │   │   ├── swap.js                   # Script to manage swap operations (buying/selling) of tokens.
