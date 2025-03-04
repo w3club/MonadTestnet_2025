@@ -57,7 +57,7 @@ function saveTokens(tokens) {
 const chain = require("../../utils/chain.js");
 const wallets = require("../../utils/wallets.json");
 const { ROUTER_CONTRACT, MON_CONTRACT, ABI } = require("./ABI.js");
-const { getRecentLaunchedTokens } = require("./scripts/apis.js");
+const { getRecentLaunchedTokens, getTokenPrice } = require("./scripts/apis.js");
 
 // Configure winston: timestamp with brackets in blue, message in blue.
 const logger = winston.createLogger({
@@ -71,7 +71,7 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()]
 });
 
-// Filter tokens launched in the last 60 seconds (1 minute)
+// Filter tokens launched in the last 5 seconds
 function filterRecentTokens(orderTokens) {
   const currentTime = Math.floor(Date.now() / 1000);
   return orderTokens.filter(item => {
@@ -94,27 +94,24 @@ async function approveRouter(tokenAddress, signer) {
 }
 
 // Function to buy tokens using protectBuy.
-// Checks if the token was already purchased (or processed) and skips if so.
+// It skips purchase if the token has already been purchased or processed.
 async function buyToken(wallet, tokenData, purchaseAmount) {
   const tokensBought = readTokens().map(r => r.contract_address.toLowerCase());
   const token = tokenData.token_info.token_id.toLowerCase();
-  // Skip purchase if token is already recorded or has been processed
   if (tokensBought.includes(token) || processedTokenIds.has(token)) {
     return;
   }
-
+  
   const provider = new ethers.providers.JsonRpcProvider(chain.RPC_URL);
   const signer = new ethers.Wallet(wallet.privateKey, provider);
   const routerContract = new ethers.Contract(ROUTER_CONTRACT, ABI, signer);
 
-  const amountIn = purchaseAmount; // amount to buy (user input)
+  const amountIn = purchaseAmount;
   const amountOutMin = 0;
-  const fee = ethers.utils.parseUnits("0.01", "ether");
+  const fee = purchaseAmount.mul(1).div(100);
   const to = wallet.address;
   const deadline = Math.floor(Date.now() / 1000) + (6 * 3600);
   const totalValue = amountIn.add(fee);
-
-  // Random gas limit between 250000 and 350000
   const randomGasLimit = Math.floor(Math.random() * (350000 - 250000 + 1)) + 250000;
 
   try {
@@ -131,7 +128,7 @@ async function buyToken(wallet, tokenData, purchaseAmount) {
     const receipt = await tx.wait();
     logger.info(`Tx Confirmed in Block - [${receipt.blockNumber}] for Wallet [${wallet.address}]`);
 
-    // Immediately approve the router for the purchased token (without logging)
+    // Immediately approve router for the purchased token (without logging)
     await approveRouter(token, signer);
 
     // Record the purchase in tokens.json
@@ -151,7 +148,6 @@ async function buyToken(wallet, tokenData, purchaseAmount) {
       updatedTokens.push(record);
     }
     saveTokens(updatedTokens);
-    // Mark token as processed so it won't be bought again
     processedTokenIds.add(token);
   } catch (error) {
     if (error && error.code === "CALL_EXCEPTION") {
@@ -161,7 +157,6 @@ async function buyToken(wallet, tokenData, purchaseAmount) {
     } else {
       logger.info(`Error buying token for wallet [${wallet.address}]: ${error}`);
     }
-    // Mark token as processed even if purchase fails
     processedTokenIds.add(token);
   }
 }
@@ -205,51 +200,38 @@ async function sellToken(wallet, tokenAddress) {
   }
 }
 
-// Function to check and sell existing tokens from tokens.json if they are found in the API data.
-// Also logs if a token reaches TP or SL.
-async function sellExistingTokens(selectedWallets) {
-  try {
-    const orderTokens = await getRecentLaunchedTokens();
-    const apiTokensMap = {};
-    // Build a map for quick lookup: token_id => token_info
-    orderTokens.forEach(t => {
-      apiTokensMap[t.token_info.token_id.toLowerCase()] = t.token_info;
-    });
+// Function to check purchased tokens for price conditions using getTokenPrice and sell if needed.
+async function checkAndSellByPrice(selectedWallets) {
+  const tokensBought = readTokens();
+  if (tokensBought.length === 0) return;
+  
+  for (const record of tokensBought) {
+    try {
+      const tokenPriceData = await getTokenPrice(record.contract_address);
+      const currentPrice = parseFloat(tokenPriceData.price);
+      const boughtPrice = parseFloat(record.bought_at_price);
+      const profitThreshold = boughtPrice * (1 + TAKE_PROFIT / 100);
+      const lossThreshold = boughtPrice * (1 - STOP_LOSS / 100);
 
-    const tokensBought = readTokens();
-    if (tokensBought.length === 0) return;
-
-    for (const record of tokensBought) {
-      const tokenId = record.contract_address.toLowerCase();
-      if (apiTokensMap[tokenId]) {
-        const tokenInfo = apiTokensMap[tokenId];
-        const currentPrice = parseFloat(tokenInfo.price);
-        const boughtPrice = parseFloat(record.bought_at_price);
-        const profitThreshold = boughtPrice * (1 + TAKE_PROFIT / 100);
-        const lossThreshold = boughtPrice * (1 - STOP_LOSS / 100);
-
-        if (currentPrice >= profitThreshold) {
-          logger.info(`[${tokenInfo.symbol}] Has reached TP Limit. Initializing Sell Orders...`);
-        } else if (currentPrice <= lossThreshold) {
-          logger.info(`[${tokenInfo.symbol}] Has reached SL Limit. Initializing Sell Orders...`);
-        } else {
-          continue; // Skip selling if neither condition is met.
-        }
-
-        // For each wallet that bought this token, sell it.
-        for (const walletId of record.used_wallets) {
-          const wallet = selectedWallets.find(w => w.id === walletId);
-          if (wallet) {
-            await sellToken(wallet, record.contract_address);
-          }
-        }
-        // Remove the record once sold.
-        const updated = tokensBought.filter(r => r.contract_address.toLowerCase() !== tokenId);
-        saveTokens(updated);
+      if (currentPrice >= profitThreshold) {
+        logger.info(`[${tokenPriceData.symbol}] Has reached TP Limit. Initializing Sell Orders...`);
+      } else if (currentPrice <= lossThreshold) {
+        logger.info(`[${tokenPriceData.symbol}] Has reached SL Limit. Initializing Sell Orders...`);
+      } else {
+        continue;
       }
+      
+      for (const walletId of record.used_wallets) {
+        const wallet = selectedWallets.find(w => w.id === walletId);
+        if (wallet) {
+          await sellToken(wallet, record.contract_address);
+        }
+      }
+      const updated = tokensBought.filter(r => r.contract_address.toLowerCase() !== record.contract_address.toLowerCase());
+      saveTokens(updated);
+    } catch (err) {
+      // Silently ignore errors during price check.
     }
-  } catch (error) {
-    // Silently ignore errors during sell check.
   }
 }
 
@@ -293,7 +275,7 @@ async function main() {
   ]);
 
   if (sellExisting) {
-    await sellExistingTokens(selectedWallets);
+    await checkAndSellByPrice(selectedWallets);
   }
 
   // Ask for the purchase amount (amountIn) in MON (minimum 1 MON)
@@ -341,7 +323,6 @@ async function main() {
           );
           await Promise.all(buyPromises);
           logger.info("Buying transactions processed for this token.");
-          // Mark token as processed
           processedTokenIds.add(tokenInfo.token_id.toLowerCase());
           if (PROCESS_ONE_TOKEN_PER_TIME) break;
         }
@@ -350,10 +331,10 @@ async function main() {
       // Silently ignore API errors.
     }
     cycleCount++;
-    // Every 2 cycles (approximately 10 seconds) check existing tokens for selling conditions.
+    // Every 2 cycles (approximately 10 seconds) check purchased tokens for selling conditions by price.
     if (cycleCount % 2 === 0) {
       try {
-        await sellExistingTokens(selectedWallets);
+        await checkAndSellByPrice(selectedWallets);
       } catch (err) {
         // Silently ignore errors during sell check.
       }

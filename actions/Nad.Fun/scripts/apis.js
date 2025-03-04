@@ -1,3 +1,5 @@
+// scripts/apis.js
+
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
 
@@ -30,7 +32,7 @@ async function getMetadataTokenURI(tokenName, tokenSymbol, imageURI, description
     "Content-Type": "application/json"
   };
 
-  // Se genera un nombre de metadata único usando UUID
+  // Automatically generate a unique metadata filename using UUID
   const metadataFileName = `metadata-${uuidv4()}.json`;
 
   const payload = {
@@ -49,7 +51,7 @@ async function getMetadataTokenURI(tokenName, tokenSymbol, imageURI, description
   try {
     const response = await axios.post(url, payload, { headers });
     if (response.status === 200 && response.data.success) {
-      // Se retorna el fileUrl como tokenURI
+      // Return fileUrl as tokenURI
       return response.data.fileUrl;
     } else {
       throw new Error(`Metadata upload failed: ${response.status} - ${JSON.stringify(response.data)}`);
@@ -79,4 +81,27 @@ async function getRecentLaunchedTokens() {
   }
 }
 
-module.exports = { getTokenURI, getMetadataTokenURI, getRecentLaunchedTokens };
+async function getTokenPrice(tokenAddress) {
+  const url = `https://testnet-api-server.nad.fun/trade/market/${tokenAddress}`;
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+  };
+  try {
+    const response = await axios.get(url, { headers });
+    if (response.status === 200 && response.data.price) {
+      return response.data;
+    } else {
+      throw new Error(`Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`);
+    }
+  } catch (error) {
+    console.error("Error in getTokenPrice:", error);
+    throw error;
+  }
+}
+
+module.exports = {
+  getTokenURI,
+  getMetadataTokenURI,
+  getRecentLaunchedTokens,
+  getTokenPrice
+};

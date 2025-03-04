@@ -1,0 +1,57 @@
+HELP.TXT – Project Overview and File Descriptions
+
+1. ABI.js
+   • Description: Contains the ABI definitions and addresses for the smart contracts used in the project (e.g., Factory, Router, MON contract).
+   • Usage: This file is imported by other scripts (deploy.js, dev.js, snipe.js, swap.js) to interact with the contracts deployed on the testnet.
+
+2. deploy.js
+   • Description: This script handles the deployment of a new token.
+   • Workflow:
+     - Prompts for the deployer wallet ID.
+     - Downloads the token logo from a provided URL.
+     - Uploads the logo to obtain an image URI.
+     - Creates and uploads token metadata (using token name, symbol, description, and image URI).
+     - Deploys the token by calling the createCurve function on the factory contract.
+   • Usage: Run this script to deploy a new token on the testnet.
+
+3. dev.js
+   • Description: This script follows the deployment process (like deploy.js) but then initiates buying transactions.
+   • Workflow:
+     - First, the deployer wallet is chosen and the token is deployed.
+     - After deployment, the script prompts for buyer wallet IDs.
+     - Each buyer wallet performs a defined number of purchase (protectBuy) transactions on the newly deployed token.
+   • Usage: Run this script after deploying a token when you want to simulate “insider” purchases.
+
+4. scripts (Directory)
+   • Description: Contains helper API functions (e.g., getTokenURI, getMetadataTokenURI, getRecentLaunchedTokens, getTokenPrice).
+   • Usage: These functions are imported and used by deploy.js, snipe.js, and dev.js to handle interactions with external APIs 
+     (for uploading images/metadata and retrieving token data).
+
+5. snipe.js
+   • Description: This script continuously monitors for recently launched tokens on the testnet auto buy them and auto sell based on price conditions.
+   • Workflow:
+     - Every 5 seconds, it calls an API to get recent token launches.
+     - Filters tokens launched in the last 5 seconds.
+     - If a token is new and has not been purchased yet, it executes a buy (protectBuy) transaction.
+     - It also monitors token prices (every 10 seconds) to trigger sell orders (via protectSell) based on 
+       pre-defined take profit (TP) or stop loss (SL) thresholds.
+   • Usage: Run this script to automate the sniping (buying/selling) process based on live token launches and price movements.
+
+6. swap.js
+   • Description: This script simulates trading activity by performing a series of swap transactions.
+   • Workflow:
+     - Prompts for which wallets to use and a list of token contract addresses.
+     - For each selected wallet, randomly chooses one token and executes between 2 and 5 swap transactions,
+       alternating between buys and sells (with the final transaction always a sell).
+     - Uses protectBuy for buying and protectSell for selling.
+   • Usage: Run this script to simulate trading (swapping) of tokens.
+
+7. tokens.json
+   • Description: This file stores records of tokens that have been purchased by the system.
+   • Content: Each record includes the token contract address, an array of wallet IDs that bought the token,
+     the timestamp of purchase, and the purchase price.
+   • Usage: This file is used by snipe.js (and indirectly by dev.js) to prevent re-buying tokens already purchased,
+     and to check TP/SL conditions for initiating sell orders.
+
+By reviewing this help file, you can understand the role of each file in the project and how to run the scripts for deployment, token sniping, and simulated swaps.
+

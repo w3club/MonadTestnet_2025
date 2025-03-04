@@ -14,7 +14,7 @@ async function pause() {
     {
       type: 'input',
       name: 'continue',
-      message: 'Press ENTER to back main menu...',
+      message: 'Press ENTER to return to the main menu...',
     },
   ]);
 }
@@ -26,6 +26,57 @@ function runScript(scriptPath) {
       resolve();
     });
   });
+}
+
+async function specificAppMenu() {
+  // First, select the app
+  const { appChoice } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'appChoice',
+      message: 'Select an App:',
+      choices: [
+        { name: '1. Nad.Fun', value: 'nadfun' }
+      ]
+    }
+  ]);
+
+  if (appChoice === 'nadfun') {
+    const { appOption } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'appOption',
+        message: 'What would you like to do?',
+        choices: [
+          { name: '1. Launch a Token', value: 'launchToken' },
+          { name: '2. Execute Swaps', value: 'executeSwaps' },
+          { name: '3. Snipe Tokens', value: 'snipeTokens' },
+          { name: '4. Launch a Token with Insider Txs', value: 'launchInsider' }
+        ]
+      }
+    ]);
+    switch (appOption) {
+      case 'launchToken':
+        console.log('Launching Token...'.green);
+        await runScript('actions/Nad.Fun/deploy.js');
+        break;
+      case 'executeSwaps':
+        console.log('Executing Swaps...'.green);
+        await runScript('actions/Nad.Fun/swap.js');
+        break;
+      case 'snipeTokens':
+        console.log('Snipe Tokens...'.green);
+        await runScript('actions/Nad.Fun/snipe.js');
+        break;
+      case 'launchInsider':
+        console.log('Launching Token with Insider Txs...'.green);
+        await runScript('actions/Nad.Fun/dev.js');
+        break;
+      default:
+        break;
+    }
+  }
+  await pause();
 }
 
 async function mainMenu() {
@@ -49,6 +100,7 @@ async function mainMenu() {
         { name: '5. Deploy a Contract', value: 'deployContract' },
         { name: '6. Deploy a Token', value: 'deployToken' },
         { name: '7. Deploy NFT Collection', value: 'deployNFT' },
+        { name: '8. Use Specific App', value: 'specificApp' },
         { name: '0. Exit', value: 'exit' },
       ],
     },
@@ -195,6 +247,10 @@ async function mainMenu() {
       console.log('Launching Deploy NFT Collection...'.green);
       await runScript('actions/deploy_contract/NFTs/deploy.js');
       await pause();
+      break;
+
+    case 'specificApp':
+      await specificAppMenu();
       break;
 
     case 'exit':
