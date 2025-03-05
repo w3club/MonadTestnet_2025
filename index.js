@@ -36,7 +36,8 @@ async function specificAppMenu() {
       name: 'appChoice',
       message: 'Select an App:',
       choices: [
-        { name: '1. Nad.Fun', value: 'nadfun' }
+        { name: '1. Nad.Fun', value: 'nadfun' },
+        { name: '2. MagicEden', value: 'magiceden' }
       ]
     }
   ]);
@@ -76,6 +77,30 @@ async function specificAppMenu() {
       case 'basicSwap':
         console.log('Launching Basic Swap...'.green);
         await runScript('actions/Nad.Fun/basicSwap.js');
+        break;
+      default:
+        break;
+    }
+  } else if (appChoice === 'magiceden') {
+    const { magicEdenOption } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'magicEdenOption',
+        message: 'What would you like to do?',
+        choices: [
+          { name: '1. Mint NFTs', value: 'mintNFTs' },
+          { name: '2. Deploy NFT Collection', value: 'deployNFT' }
+        ]
+      }
+    ]);
+    switch (magicEdenOption) {
+      case 'mintNFTs':
+        console.log('Launching MagicEden: Mint NFTs...'.green);
+        await runScript('actions/NFTs-Mint/MagicEden/mint.js');
+        break;
+      case 'deployNFT':
+        console.log('Launching MagicEden: Deploy NFT Collection...'.green);
+        await runScript('actions/NFTs-Mint/MagicEden/deploy.js');
         break;
       default:
         break;
