@@ -31,8 +31,9 @@ MonadTestnet/
 │   │   └── scripts/                  # Additional scripts for Apriori (empty for now).
 │   ├── NFTs-Mint/                    
 │   │   ├── MagicEden/
-│   │   │   ├── ABI.js                # ABI definitions for MagicEden integration (to be implemented).
-│   │   │   ├── index.js              # Main script for MagicEden NFT minting.
+│   │   │   ├── ABI.js                # ABI definitions for MagicEden integration such as getConfig(), mintPublic(params) etc.
+│   │   │   ├── mint.js               # Main script for MagicEden NFT minting.
+│   │   │   ├── deploy.js             # Dedicated script to launch NFT collections on MagicEden with different Mint PPhases
 │   │   │   └── scripts/
 │   │   │       └── apis.js           # API calls for MagicEden integration.
 │   │   └── Testnet.Free/             
@@ -66,7 +67,7 @@ MonadTestnet/
 │   ├── NostraFinance/
 │   │   ├── ABI.js                    # Exports ABI definitions for NostraFinance contracts.
 │   │   └── index.js                  # Main script for the NostraFinance module.
-│   ├── Nad.Fun/                     # Nad.Fun module
+│   ├── Nad.Fun/                      # Nad.Fun module
 │   │   ├── ABI.js                    # Contains and exports the ABI definitions for Nad.Fun contracts.
 │   │   ├── deploy.js                 # Deployment script for Nad.Fun contracts on testnet.
 │   │   ├── basicSwap.js              # Basic swap script prompting for all required swap details.
@@ -87,7 +88,7 @@ MonadTestnet/
 │   │   ├── claim.js                  # Script to claim tokens from the Morkie faucet (verifies NFT ownership).
 │   │   └── scripts/
 │   │       └── apis.js               # API calls for the Morkie faucet.
-│   ├── owlto_faucet                 # To be implemented – Owlto faucet script.
+│   ├── owlto_faucet                  # To be implemented – Owlto faucet script.
 │   └── faucet.trade/
 │       ├── add_data.js               # Interactive script to add credentials for the trade faucet.
 │       ├── captcha.js                # Script to handle captcha challenges for faucet trades.
