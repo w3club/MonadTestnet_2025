@@ -16,9 +16,9 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Helper: generate a random buy amount in MON between 1 and 1.10
+// Helper: generate a random buy amount in MON between 0.5 and 1.0
 function getRandomBuyAmount() {
-  const randomFactor = 1 + Math.random() * 0.10; // from 1.00 to 1.10
+  const randomFactor = 0.5 + Math.random() * 0.5; // from 0.5 to 1.0
   return ethers.utils.parseUnits(randomFactor.toFixed(4), "ether");
 }
 
@@ -43,7 +43,7 @@ async function protectBuySwap(wallet, tokenAddress) {
   const signer = new ethers.Wallet(wallet.privateKey, provider);
   const routerContract = new ethers.Contract(ROUTER_CONTRACT, ABI, signer);
 
-  const amountIn = getRandomBuyAmount(); // random between 1 and 1.10 MON
+  const amountIn = getRandomBuyAmount(); // random between 0.5 and 1.0 MON
   const amountOutMin = 0;
   // Fee is now 1% of amountIn
   const fee = amountIn.mul(1).div(100);
@@ -53,8 +53,10 @@ async function protectBuySwap(wallet, tokenAddress) {
   
   // Random gas limit between 280000 and 380000
   const randomGasLimit = getRandomInt(280000, 380000);
-  const latestBlock = await provider.getBlock("latest");
-  const adjustedFee = latestBlock.baseFeePerGas.mul(105).div(100);
+  // Use provider fee data instead of manual calculation
+  const feeData = await provider.getFeeData();
+  const maxFee = feeData.maxFeePerGas;
+  const priorityFee = feeData.maxPriorityFeePerGas;
 
   try {
     const tx = await routerContract.protectBuy(
@@ -67,8 +69,8 @@ async function protectBuySwap(wallet, tokenAddress) {
       {
         value: totalValue,
         gasLimit: randomGasLimit,
-        maxFeePerGas: adjustedFee,
-        maxPriorityFeePerGas: adjustedFee
+        maxFeePerGas: maxFee,
+        maxPriorityFeePerGas: priorityFee
       }
     );
     console.log(`👉 Wallet [${wallet.address}] is Buying [${await getTokenSymbol(tokenAddress)}]`);
@@ -84,7 +86,13 @@ async function protectBuySwap(wallet, tokenAddress) {
     const tokenContract = new ethers.Contract(tokenAddress, erc20AbiForApprove, signer);
     const currentAllowance = await tokenContract.allowance(wallet.address, ROUTER_CONTRACT);
     if (currentAllowance.eq(0)) {
-      await tokenContract.approve(ROUTER_CONTRACT, ethers.constants.MaxUint256);
+      // Use fee data for the approval transaction as well
+      const feeDataApprove = await provider.getFeeData();
+      await tokenContract.approve(ROUTER_CONTRACT, ethers.constants.MaxUint256, {
+        gasLimit: getRandomInt(280000, 380000),
+        maxFeePerGas: feeDataApprove.maxFeePerGas,
+        maxPriorityFeePerGas: feeDataApprove.maxPriorityFeePerGas
+      });
     }
   } catch (error) {
     console.log(`❌ Error during buying for wallet [${wallet.address}]: ${error}`);
@@ -108,7 +116,13 @@ async function protectSellSwap(wallet, tokenAddress) {
     if (balance.isZero()) return;
     const currentAllowance = await tokenContract.allowance(wallet.address, ROUTER_CONTRACT);
     if (currentAllowance.eq(0)) {
-      await tokenContract.approve(ROUTER_CONTRACT, ethers.constants.MaxUint256);
+      // Approve router if not already approved, using fee data from provider
+      const feeDataApprove = await provider.getFeeData();
+      await tokenContract.approve(ROUTER_CONTRACT, ethers.constants.MaxUint256, {
+        gasLimit: getRandomInt(280000, 380000),
+        maxFeePerGas: feeDataApprove.maxFeePerGas,
+        maxPriorityFeePerGas: feeDataApprove.maxPriorityFeePerGas
+      });
     }
     const amountIn = balance;
     const amountOutMin = 0;
@@ -116,8 +130,9 @@ async function protectSellSwap(wallet, tokenAddress) {
     const deadline = Math.floor(Date.now() / 1000) + 6 * 3600;
     
     const randomGasLimit = getRandomInt(280000, 380000);
-    const latestBlock = await provider.getBlock("latest");
-    const adjustedFee = latestBlock.baseFeePerGas.mul(105).div(100);
+    const feeData = await provider.getFeeData();
+    const maxFee = feeData.maxFeePerGas;
+    const priorityFee = feeData.maxPriorityFeePerGas;
     
     const tx = await routerContract.protectSell(
       amountIn,
@@ -127,8 +142,8 @@ async function protectSellSwap(wallet, tokenAddress) {
       deadline,
       {
         gasLimit: randomGasLimit,
-        maxFeePerGas: adjustedFee,
-        maxPriorityFeePerGas: adjustedFee
+        maxFeePerGas: maxFee,
+        maxPriorityFeePerGas: priorityFee
       }
     );
     console.log(`👉  Wallet [${wallet.address}] is Selling [${await getTokenSymbol(tokenAddress)}]`);
@@ -197,8 +212,8 @@ async function main() {
           await protectSellSwap(wallet, chosenToken);
         }
       }
-      // 2-second delay between each swap
-      await delay(2000);
+      // 5-second delay between each swap
+      await delay(5000);
     }
   }
 }
