@@ -67,7 +67,7 @@ MonadTestnet/
 │   ├── NostraFinance/
 │   │   ├── ABI.js                    # Exports ABI definitions for NostraFinance contracts.
 │   │   └── index.js                  # Main script for the NostraFinance module.
-│   ├── Nad.Fun/                      # Nad.Fun module
+│   ├── Nad.Fun/                    
 │   │   ├── ABI.js                    # Contains and exports the ABI definitions for Nad.Fun contracts.
 │   │   ├── deploy.js                 # Deployment script for Nad.Fun contracts on testnet.
 │   │   ├── basicSwap.js              # Basic swap script prompting for all required swap details.
@@ -78,6 +78,12 @@ MonadTestnet/
 │   │   ├── help.txt                  # Documentation file with descriptions and instructions for Nad.Fun module files.
 │   │   └── scripts/
 │   │       └── apis.js               # Contains API functions (getTokenURI, getMetadataTokenURI, getRecentLaunchedTokens, getTokenPrice).
+│   └── Nad.Domains/                  # Nad.Domains module
+│       ├── ABI.js                    # Contains and exports the ABI definitions for Nad.Domains contracts.
+│       ├── index.js                  # Main script for the Nad.Domains module; interactive menu for domain registration and management.
+│       ├── faucet.js                 # (Optional) Script for domain faucet operations.
+│       └── scripts/
+│           └── apis.js               # Contains API functions (e.g., getSignatureToBuy) for domain registration.
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet.

@@ -37,7 +37,8 @@ async function specificAppMenu() {
       message: 'Select an App:',
       choices: [
         { name: '1. Nad.Fun', value: 'nadfun' },
-        { name: '2. MagicEden', value: 'magiceden' }
+        { name: '2. MagicEden', value: 'magiceden' },
+        { name: '3. Nad.Domains', value: 'naddomains' }
       ]
     }
   ]);
@@ -105,6 +106,9 @@ async function specificAppMenu() {
       default:
         break;
     }
+  } else if (appChoice === 'naddomains') {
+    console.log('Launching Nad.Domains...'.green);
+    await runScript('actions/Nad.Domains/index.js');
   }
   await pause();
 }

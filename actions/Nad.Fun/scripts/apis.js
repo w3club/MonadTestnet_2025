@@ -63,7 +63,7 @@ async function getMetadataTokenURI(tokenName, tokenSymbol, imageURI, description
 }
 
 async function getRecentLaunchedTokens() {
-  const url = "https://testnet-api-server.nad.fun/order/latest_trade?page=1&limit=16";
+  const url = "https://testnet-api-server.nad.fun/order/latest_trade?page=1&limit=32";
   const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     "Content-Type": "application/json"
