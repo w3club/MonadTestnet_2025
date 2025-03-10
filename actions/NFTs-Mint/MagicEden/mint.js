@@ -7,7 +7,8 @@ const walletsData = require("../../../utils/wallets.json");
 const { ABI } = require("./ABI");
 
 // Global variable that may change if a CALL_EXCEPTION occurs and we retry with the alternate variant.
-let globalMintVariant = "twoParams";
+// Por defecto, usaremos "fourParams" sin importar el valor de MINT_PRICE.
+let globalMintVariant = "fourParams";
 
 function getRandomGasLimit(min = 180000, max = 280000) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -33,7 +34,8 @@ async function getConfigWithFallback(contract) {
     config = await contract.getConfig();
     if (!config.publicStage.price.eq(0)) {
       console.log(chalk.green("getConfig() without parameters succeeded and returned a nonzero price."));
-      return { config, variant: "twoParams" };
+      // Se ignora la variante devuelta por el contrato, forzamos el uso de "fourParams"
+      return { config, variant: "fourParams" };
     } else {
       console.error(chalk.red("getConfig() without parameters returned a price of 0, trying fallback tokenIds."));
     }
@@ -65,7 +67,7 @@ async function getConfigWithFallback(contract) {
 }
 
 /**
- * Sends the mint transaction. If a CALL_EXCEPTION occurs, it retries with the alternate variant and updates globalMintVariant.
+ * Sends the mint transaction. If a CALL_EXCEPTION occurs at any stage, it retries with the alternate variant.
  */
 async function sendMint(
   contractAddress,
@@ -80,69 +82,50 @@ async function sendMint(
   const contractWithWallet = new ethers.Contract(contractAddress, ABI, wallet);
   console.log(chalk.blue(`[#️⃣ ] Wallet ID - [${walletId}] is minting 1 NFT(s)`));
 
+  let tx;
+  let attemptedVariant = mintVariant;
+  
   try {
-    let tx;
-    try {
-      if (mintVariant === "fourParams") {
-        tx = await contractWithWallet["mintPublic(address,uint256,uint256,bytes)"](
-          wallet.address, 0, 1, "0x",
-          {
-            gasLimit,
-            maxFeePerGas: fee,
-            maxPriorityFeePerGas: fee,
-            value: mintPrice
-          }
-        );
-      } else {
-        tx = await contractWithWallet["mintPublic(address,uint256)"](
-          wallet.address, 1,
-          {
-            gasLimit,
-            maxFeePerGas: fee,
-            maxPriorityFeePerGas: fee,
-            value: mintPrice
-          }
-        );
-      }
-    } catch (err) {
-      // If a CALL_EXCEPTION occurs, retry with the alternate variant
-      if (err.code === ethers.errors.CALL_EXCEPTION || err.message.includes("CALL_EXCEPTION")) {
-        console.error(chalk.red(`CALL_EXCEPTION for Wallet [${walletId}] using ${mintVariant}. Retrying with alternate variant...`));
-        let alternateVariant = mintVariant === "twoParams" ? "fourParams" : "twoParams";
-        let altTx;
-        if (alternateVariant === "fourParams") {
-          altTx = await contractWithWallet["mintPublic(address,uint256,uint256,bytes)"](
-            wallet.address, 0, 1, "0x",
-            {
-              gasLimit,
-              maxFeePerGas: fee,
-              maxPriorityFeePerGas: fee,
-              value: mintPrice
-            }
-          );
-        } else {
-          altTx = await contractWithWallet["mintPublic(address,uint256)"](
-            wallet.address, 1,
-            {
-              gasLimit,
-              maxFeePerGas: fee,
-              maxPriorityFeePerGas: fee,
-              value: mintPrice
-            }
-          );
-        }
-        globalMintVariant = alternateVariant;
-        tx = altTx;
-      } else {
-        throw err;
-      }
+    if (attemptedVariant === "fourParams") {
+      tx = await contractWithWallet["mintPublic(address,uint256,uint256,bytes)"](
+        wallet.address, 0, 1, "0x",
+        { gasLimit, maxFeePerGas: fee, maxPriorityFeePerGas: fee, value: mintPrice }
+      );
+    } else {
+      tx = await contractWithWallet["mintPublic(address,uint256)"](
+        wallet.address, 1,
+        { gasLimit, maxFeePerGas: fee, maxPriorityFeePerGas: fee, value: mintPrice }
+      );
     }
+    // Imprime inmediatamente el hash de la transacción
     console.log(chalk.green(`[🟢] Mint transaction sent! Wallet ID - [${walletId}] - [${explorerUrl}${tx.hash}]`));
+    // Espera la confirmación en bloque
     const receipt = await tx.wait();
     console.log(chalk.magenta(`[✔] Transaction confirmed in Block - [${receipt.blockNumber}] for Wallet - [${walletId}]`));
   } catch (err) {
     if (err.code === ethers.errors.CALL_EXCEPTION || err.message.includes("CALL_EXCEPTION")) {
-      console.error(chalk.red(`[❌] CALL_EXCEPTION for Wallet [${walletId}]`));
+      console.error(chalk.red(`CALL_EXCEPTION for Wallet [${walletId}] using ${attemptedVariant}. Retrying with alternate variant...`));
+      const alternateVariant = attemptedVariant === "twoParams" ? "fourParams" : "twoParams";
+      try {
+        if (alternateVariant === "fourParams") {
+          tx = await contractWithWallet["mintPublic(address,uint256,uint256,bytes)"](
+            wallet.address, 0, 1, "0x",
+            { gasLimit, maxFeePerGas: fee, maxPriorityFeePerGas: fee, value: mintPrice }
+          );
+        } else {
+          tx = await contractWithWallet["mintPublic(address,uint256)"](
+            wallet.address, 1,
+            { gasLimit, maxFeePerGas: fee, maxPriorityFeePerGas: fee, value: mintPrice }
+          );
+        }
+        globalMintVariant = alternateVariant;
+        // Imprime inmediatamente el hash de la transacción del reintento
+        console.log(chalk.green(`[🟢] Mint transaction sent! Wallet ID - [${walletId}] - [${explorerUrl}${tx.hash}]`));
+        const receipt = await tx.wait();
+        console.log(chalk.magenta(`[✔] Transaction confirmed in Block - [${receipt.blockNumber}] for Wallet - [${walletId}]`));
+      } catch (retryErr) {
+        console.error(chalk.red(`[❌] CALL_EXCEPTION for Wallet [${walletId}] on retry with ${alternateVariant}`));
+      }
     } else if (err.message.includes("INSUFFICIENT_FUNDS")) {
       console.error(chalk.yellow(`[⚠️ ] Wallet [${walletId}] is out of funds. Skipping...`));
     } else {
@@ -154,7 +137,7 @@ async function sendMint(
 async function main() {
   const provider = new ethers.providers.JsonRpcProvider(chainConfig.RPC_URL, chainConfig.CHAIN_ID);
 
-  // Collect basic inputs
+  // Recopilamos los datos básicos de entrada.
   const inputResponses = await inquirer.prompt([
     {
       type: "list",
@@ -187,19 +170,15 @@ async function main() {
     }
   ]);
 
-  // First, obtain or define the MINT_PRICE
+  // Se intenta obtener el MINT_PRICE desde el contrato.
   let finalConfig = null;
-  let derivedVariant = "twoParams";
-  let zeroPrice = false;
-
   if (inputResponses.useContractPrice) {
     try {
       const contractForConfig = new ethers.Contract(inputResponses.contractAddress, ABI, provider);
       const cfgResult = await getConfigWithFallback(contractForConfig);
       if (cfgResult) {
         finalConfig = cfgResult.config;
-        derivedVariant = cfgResult.variant;
-        zeroPrice = !!cfgResult.zeroPrice;
+        console.log(chalk.green(`MINT_PRICE obtained from contract - [${ethers.utils.formatEther(finalConfig.publicStage.price)}] MON`));
       }
     } catch (err) {
       console.error(chalk.red("Error retrieving config from contract. We'll ask for manual MINT_PRICE."));
@@ -208,30 +187,29 @@ async function main() {
     console.log(chalk.yellow("Not retrieving MINT_PRICE from contract; manual input will be requested."));
   }
 
+  // Si el contrato no devuelve un precio (o si devuelve 0), se solicita el ingreso manual.
   let mintPrice;
-  if (finalConfig && !zeroPrice && !finalConfig.publicStage.price.eq(0)) {
-    // Successfully retrieved a non-zero price
+  if (finalConfig && !finalConfig.publicStage.price.eq(0)) {
     mintPrice = finalConfig.publicStage.price;
-    globalMintVariant = derivedVariant;
-    console.log(chalk.green(`MINT_PRICE obtained from contract - [${ethers.utils.formatEther(mintPrice)}] MON`));
   } else {
-    console.log(chalk.red("Unable to retrieve MINT_PRICE from contract"));
-    console.log("Please enter the MINT_PRICE (e.g 0.01):");
+    console.log(chalk.red("MINT_PRICE was not obtained from the contract or is 0. Please enter the MINT_PRICE manually (e.g. 0.01):"));
     const { manualPrice } = await inquirer.prompt([
       {
         type: "input",
         name: "manualPrice",
         message: "MINT_PRICE:",
-        validate: input => !isNaN(input) && Number(input) > 0
+        validate: input => !isNaN(input) && Number(input) >= 0
       }
     ]);
     mintPrice = ethers.utils.parseEther(manualPrice.toString());
-    globalMintVariant = "twoParams";
   }
+  
+  // Se forzará el uso de "fourParams" por defecto, independientemente del valor de MINT_PRICE.
+  globalMintVariant = "fourParams";
   console.log(chalk.blue(`MINT_PRICE is set to - [${ethers.utils.formatEther(mintPrice)}] MON`));
 
-  // For Scheduled Mint, schedule based on the startTime if available
-  if (inputResponses.mintOption === "Scheduled Mint" && finalConfig && !finalConfig.publicStage.price.eq(0)) {
+  // Para Scheduled Mint, se programa el inicio si el contrato dispone de startTime.
+  if (inputResponses.mintOption === "Scheduled Mint" && finalConfig) {
     try {
       const startTime = finalConfig.publicStage.startTime.toNumber();
       const currentTime = Math.floor(Date.now() / 1000);
@@ -246,7 +224,7 @@ async function main() {
     }
   }
 
-  // Calculate fee (same for both Instant Mint and Scheduled Mint)
+  // Se calcula la fee (igual para Instant Mint y Scheduled Mint)
   const latestBlock = await provider.getBlock("latest");
   const baseFee = latestBlock.baseFeePerGas;
   const fee = baseFee.mul(125).div(100);
@@ -254,7 +232,7 @@ async function main() {
   const gasLimit = getRandomGasLimit();
   console.log(chalk.yellow(`Using gasLimit: [${gasLimit}] globalMintVariant: [${globalMintVariant}]`));
 
-  // Wallet selection
+  // Selección de wallets
   let selectedWallets;
   if (inputResponses.walletChoice === "All wallets") {
     selectedWallets = walletsData;
@@ -263,7 +241,8 @@ async function main() {
     selectedWallets = walletsData.filter(w => ids.includes(w.id));
   }
 
-  const limit = pLimit(10);
+  // Aumentamos p-limit a 20 para mayor concurrencia.
+  const limit = pLimit(20);
   const explorerUrl = chainConfig.TX_EXPLORER;
 
   const tasks = selectedWallets.map(walletData =>
