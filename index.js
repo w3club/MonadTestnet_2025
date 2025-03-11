@@ -29,7 +29,6 @@ function runScript(scriptPath) {
 }
 
 async function specificAppMenu() {
-  // First, select the app
   const { appChoice } = await inquirer.prompt([
     {
       type: 'list',
@@ -185,7 +184,8 @@ async function mainMenu() {
           choices: [
             { name: '1. BeanSwap', value: 'beanSwap' },
             { name: '2. Ambient Finance (coming soon...)', value: 'ambientFinance' },
-            { name: '3. KuruSwap', value: 'kuruSwap' }
+            { name: '3. KuruSwap', value: 'kuruSwap' },
+            { name: '4. OctoSwap', value: 'octoSwap' }
           ],
         },
       ]);
@@ -212,6 +212,8 @@ async function mainMenu() {
           console.log('Swapping all assets for MON via BeanSwap...'.green);
           await runScript('actions/BeanSwap/liquidate.js');
         }
+      } else if (swapChoice === 'ambientFinance') {
+        console.log('Ambient Finance coming soon...'.green);
       } else if (swapChoice === 'kuruSwap') {
         const { kuruSwapMode } = await inquirer.prompt([
           {
@@ -231,8 +233,25 @@ async function mainMenu() {
           console.log('Launching Automatic KuruSwap...'.green);
           await runScript('actions/KuruSwap/random.js');
         }
-      } else {
-        console.log('Ambient Finance coming soon...'.green);
+      } else if (swapChoice === 'octoSwap') {
+        const { octoSwapMode } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'octoSwapMode',
+            message: 'Select swap mode for OctoSwap:',
+            choices: [
+              { name: '1. Manual Swaps', value: 'manual' },
+              { name: '2. Automatic Swaps', value: 'automatic' }
+            ],
+          },
+        ]);
+        if (octoSwapMode === 'manual') {
+          console.log('Launching Manual OctoSwap...'.green);
+          await runScript('actions/OctoSwap/swap.js');
+        } else {
+          console.log('Launching Automatic OctoSwap...'.green);
+          await runScript('actions/OctoSwap/random.js');
+        }
       }
       await pause();
       break;
@@ -326,7 +345,6 @@ async function mainMenu() {
     default:
       break;
   }
-
   mainMenu();
 }
 

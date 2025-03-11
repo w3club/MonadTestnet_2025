@@ -80,12 +80,17 @@ MonadTestnet/
 │   │   ├── help.txt                  # Documentation file with descriptions and instructions for Nad.Fun module files.
 │   │   └── scripts/
 │   │       └── apis.js               # Contains API functions (getTokenURI, getMetadataTokenURI, getRecentLaunchedTokens, getTokenPrice).
-│   └── Nad.Domains/                  # Nad.Domains module
-│       ├── ABI.js                    # Contains and exports the ABI definitions for Nad.Domains contracts.
-│       ├── index.js                  # Main script for the Nad.Domains module; interactive menu for domain registration and management.
-│       ├── faucet.js                 # (Optional) Script for domain faucet operations.
-│       └── scripts/
-│           └── apis.js               # Contains API functions (e.g., getSignatureToBuy) for domain registration.
+│   ├── Nad.Domains/                  
+│   │   ├── ABI.js                    # Contains and exports the ABI definitions for Nad.Domains contracts.
+│   │   ├── index.js                  # Main script for the Nad.Domains module; interactive menu for domain registration and management.
+│   │   ├── faucet.js                 # (Optional) Script for domain faucet operations.
+│   │   └── scripts/
+│   │       └── apis.js               # Contains API functions (e.g., getSignatureToBuy) for domain registration.
+│   ├── OctoSwap/
+│   │   ├── ABI.js                    # Exports ABI definitions for OctoSwap's router, liquidity, random swap, and swap contracts.
+│   │   ├── liquidity.js              # (To be implemented) Script for managing liquidity operations on OctoSwap.
+│   │   ├── random.js                 # Random swap script for OctoSwap (performs random swaps automatically under custom rules).
+│   │   └── swap.js                   # Interactive swap script for OctoSwap with token approvals, dynamic gas settings, and support for MON/WMON wrapping/unwrapping.
 ├── faucets/
 │   ├── official_faucet/
 │   │   ├── claim.js                  # Script to claim tokens from the official faucet.
