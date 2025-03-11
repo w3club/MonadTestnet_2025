@@ -135,6 +135,7 @@ async function mainMenu() {
         { name: '6. Deploy a Token', value: 'deployToken' },
         { name: '7. Deploy NFT Collection', value: 'deployNFT' },
         { name: '8. Use Specific App', value: 'specificApp' },
+        { name: '9. Check Wallet Stuff', value: 'checkWalletStuff' },
         { name: '0. Exit', value: 'exit' },
       ],
     },
@@ -285,6 +286,28 @@ async function mainMenu() {
 
     case 'specificApp':
       await specificAppMenu();
+      break;
+
+    case 'checkWalletStuff':
+      const { walletInfo } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'walletInfo',
+          message: 'What would you like to know?',
+          choices: [
+            { name: "1. Number of Tx's Made", value: 'txCount' },
+            { name: '2. Current Balance Amount', value: 'balance' },
+          ],
+        },
+      ]);
+      if (walletInfo === 'txCount') {
+        console.log('Checking number of transactions...'.green);
+        await runScript('utils/txChecker.js');
+      } else if (walletInfo === 'balance') {
+        console.log('Checking current balance...'.green);
+        await runScript('utils/balanceChecker.js');
+      }
+      await pause();
       break;
 
     case 'exit':
