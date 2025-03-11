@@ -54,7 +54,8 @@ async function specificAppMenu() {
           { name: '2. Execute Swaps', value: 'executeSwaps' },
           { name: '3. Snipe Tokens', value: 'snipeTokens' },
           { name: '4. Launch a Token with Insider Txs', value: 'launchInsider' },
-          { name: '5. Swap Tokens [Basic Format]', value: 'basicSwap' }
+          { name: '5. Swap Tokens [Basic Format]', value: 'basicSwap' },
+          { name: '6. Swap available assets to MON', value: 'liquidateNad' }
         ]
       }
     ]);
@@ -78,6 +79,10 @@ async function specificAppMenu() {
       case 'basicSwap':
         console.log('Launching Basic Swap...'.green);
         await runScript('actions/Nad.Fun/basicSwap.js');
+        break;
+      case 'liquidateNad':
+        console.log('Swapping available assets to MON via Nad.Fun...'.green);
+        await runScript('actions/Nad.Fun/liquidate.js');
         break;
       default:
         break;
@@ -180,7 +185,7 @@ async function mainMenu() {
           choices: [
             { name: '1. BeanSwap', value: 'beanSwap' },
             { name: '2. Ambient Finance (coming soon...)', value: 'ambientFinance' },
-            { name: '3. KuruSwap', value: 'kuruSwap' },
+            { name: '3. KuruSwap', value: 'kuruSwap' }
           ],
         },
       ]);
@@ -193,15 +198,19 @@ async function mainMenu() {
             choices: [
               { name: '1. Manual Swaps', value: 'manual' },
               { name: '2. Automatic Swaps', value: 'automatic' },
+              { name: '3. Swap all assets for MON', value: 'liquidateBean' }
             ],
           },
         ]);
         if (beanSwapMode === 'manual') {
           console.log('Launching Manual BeanSwap...'.green);
           await runScript('actions/BeanSwap/swap.js');
-        } else {
+        } else if (beanSwapMode === 'automatic') {
           console.log('Launching Automatic BeanSwap...'.green);
           await runScript('actions/BeanSwap/random.js');
+        } else if (beanSwapMode === 'liquidateBean') {
+          console.log('Swapping all assets for MON via BeanSwap...'.green);
+          await runScript('actions/BeanSwap/liquidate.js');
         }
       } else if (swapChoice === 'kuruSwap') {
         const { kuruSwapMode } = await inquirer.prompt([

@@ -55,4 +55,36 @@ async function getAvailableMints() {
   }
 }
 
-module.exports = { quoteMintData, getAvailableMints };
+async function getAvailableItems(wallet) {
+  const url = `https://api-mainnet.magiceden.io/v3/rtp/monad-testnet/users/${wallet}/collections/v4?limit=1000&includeOnSaleCount=true&excludeSpam=true&offset=0`;
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+  };
+
+  try {
+    const response = await axios.get(url, { headers });
+    const filtered = response.data.collections.map(item => {
+      const collection = item.collection;
+      const ownership = item.ownership;
+      return {
+        id: collection.id,
+        name: collection.name,
+        isSpam: collection.isSpam,
+        native: collection.floorAskPrice && collection.floorAskPrice.amount
+          ? collection.floorAskPrice.amount.native
+          : null,
+        tokenCount: ownership.tokenCount,
+        onSaleCount: ownership.onSaleCount
+      };
+    });
+    return filtered;
+  } catch (error) {
+    console.error("❌ AxiosError in getAvailableItems:", error.message);
+    if (error.response) {
+      console.error("Response Data:", error.response.data);
+    }
+    throw error;
+  }
+}
+
+module.exports = { quoteMintData, getAvailableMints, getAvailableItems };

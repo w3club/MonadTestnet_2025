@@ -17,7 +17,9 @@ const availableTokens = {
   WMON: { name: "WMON", address: WMON_CONTRACT, decimals: 18, native: false },
   USDC: { name: "USDC", address: USDC_CONTRACT, decimals: 6, native: false },
   BEAN: { name: "BEAN", address: BEAN_CONTRACT, decimals: 18, native: false },
-  JAI: { name: "JAI", address: JAI_CONTRACT, decimals: 18, native: false }
+  JAI: { name: "JAI", address: JAI_CONTRACT, decimals: 18, native: false },
+  CHOG: { name: "CHOG", address: "0xE0590015A873bF326bd645c3E1266d4db41C4E6B", decimals: 18, native: false },
+  YAKI: { name: "YAKI", address: "0xfe140e1dCe99Be9F4F15d657CD9b7BF622270C50", decimals: 18, native: false }
 };
 
 const tokenKeys = Object.keys(availableTokens);
@@ -56,32 +58,34 @@ async function approveTokenIfNeeded(wallet, token, amount, routerAddress) {
   const tokenContract = new ethers.Contract(token.address, erc20ABI, wallet);
   const allowance = await tokenContract.allowance(wallet.address, routerAddress);
   if (allowance.lt(amount)) {
-    console.log(chalk.cyan(`⚙️  Approving [${token.name}]`));
-    await tokenContract.approve(routerAddress, ethers.constants.MaxUint256);
+    const gasLimitForApprove = getRandomInt(250000, 350000);
+    console.log(chalk.cyan(`Approving [${token.name}]...`));
+    await tokenContract.approve(routerAddress, ethers.constants.MaxUint256, { gasLimit: gasLimitForApprove });
     await sleep(1000);
-    console.log(chalk.cyan(`✅ [${token.name}] Approved`));
+    console.log(chalk.cyan(`[${token.name}] Approved`));
   }
 }
 
 async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
+  const randomGasLimit = getRandomInt(250000, 350000);
   if (tokenA.native && tokenB.name === "WMON") {
     const amountIn = ethers.utils.parseEther(swapAmountInput);
     const wmonContract = new ethers.Contract(WMON_CONTRACT, ["function deposit() payable"], wallet);
-    console.log(chalk.cyan(`🔄 Converting MON to WMON via deposit...`));
-    const tx = await wmonContract.deposit({ value: amountIn });
-    console.log(chalk.cyan(`🚀 Deposit Tx Sent! ${TX_EXPLORER}${tx.hash}`));
+    console.log(chalk.cyan("Converting MON to WMON via deposit..."));
+    const tx = await wmonContract.deposit({ value: amountIn, gasLimit: randomGasLimit });
+    console.log(chalk.cyan(`Deposit Tx Sent! ${TX_EXPLORER}${tx.hash}`));
     const receipt = await tx.wait();
-    console.log(chalk.cyan(`✅ Deposit Confirmed in Block ${receipt.blockNumber}`));
+    console.log(chalk.cyan(`Deposit Confirmed in Block ${receipt.blockNumber}`));
     return;
   }
   if (tokenA.name === "WMON" && tokenB.native) {
     const amountIn = ethers.utils.parseUnits(swapAmountInput, tokenA.decimals);
     const wmonContract = new ethers.Contract(WMON_CONTRACT, ["function withdraw(uint256)"], wallet);
-    console.log(chalk.cyan(`🔄 Converting WMON to MON via withdraw...`));
-    const tx = await wmonContract.withdraw(amountIn);
-    console.log(chalk.cyan(`🚀 Withdraw Tx Sent! ${TX_EXPLORER}${tx.hash}`));
+    console.log(chalk.cyan("Converting WMON to MON via withdraw..."));
+    const tx = await wmonContract.withdraw(amountIn, { gasLimit: randomGasLimit });
+    console.log(chalk.cyan(`Withdraw Tx Sent! ${TX_EXPLORER}${tx.hash}`));
     const receipt = await tx.wait();
-    console.log(chalk.cyan(`✅ Withdraw Confirmed in Block ${receipt.blockNumber}`));
+    console.log(chalk.cyan(`Withdraw Confirmed in Block ${receipt.blockNumber}`));
     return;
   }
   const routerContract = new ethers.Contract(ROUTER_CONTRACT, ABI, wallet);
@@ -89,19 +93,32 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
   let path = [];
   path.push(tokenA.native ? WMON_CONTRACT : tokenA.address);
   path.push(tokenB.native ? WMON_CONTRACT : tokenB.address);
-  const amountIn = tokenA.native
-    ? ethers.utils.parseEther(swapAmountInput)
-    : ethers.utils.parseUnits(swapAmountInput, tokenA.decimals);
+  let amountIn;
+  if (tokenA.native && !tokenB.native) {
+    // MON → TOKEN: use fixed random amount (unchanged)
+    amountIn = ethers.utils.parseEther(swapAmountInput);
+  } else if (!tokenA.native && tokenB.native) {
+    // TOKEN → MON: use 50-70% of tokenA balance
+    const balanceA = await getTokenBalance(provider, wallet.address, tokenA);
+    const fraction = getRandomInt(50, 70) / 100;
+    amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toString(), tokenA.decimals);
+  } else if (!tokenA.native && !tokenB.native) {
+    // TOKEN → TOKEN: use 10-30% of tokenA balance
+    const balanceA = await getTokenBalance(provider, wallet.address, tokenA);
+    const fraction = getRandomInt(10, 30) / 100;
+    amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toString(), tokenA.decimals);
+  } else {
+    amountIn = ethers.utils.parseEther(swapAmountInput);
+  }
   const amountsOut = await routerContract.getAmountsOut(amountIn, path);
   const expectedOut = amountsOut[amountsOut.length - 1];
   const humanReadableOut = tokenB.native
     ? ethers.utils.formatEther(expectedOut)
     : ethers.utils.formatUnits(expectedOut, tokenB.decimals);
-  console.log(chalk.cyan(`🔮 Expected Amount to Receive: [${humanReadableOut} ${tokenB.name}]`));
+  console.log(chalk.cyan(`Expected Amount to Receive: [${humanReadableOut} ${tokenB.name}]`));
   if (!tokenA.native) await approveTokenIfNeeded(wallet, tokenA, amountIn, ROUTER_CONTRACT);
   if (!tokenB.native) await approveTokenIfNeeded(wallet, tokenB, expectedOut, ROUTER_CONTRACT);
   const feeData = await provider.getFeeData();
-  const randomGasLimit = getRandomInt(250000, 350000);
   const baseFee = feeData.lastBaseFeePerGas || ethers.utils.parseUnits("1", "gwei");
   const maxFeePerGas = baseFee.mul(110).div(100);
   const priorityFee = feeData.maxPriorityFeePerGas || ethers.utils.parseUnits("2", "gwei");
@@ -139,25 +156,22 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
       txOverrides
     );
   }
-  console.log(chalk.cyan(`🔄 Swapping [${tokenA.name}/${tokenB.name}] - ${swapAmountInput} ${tokenA.name}`));
-  console.log(chalk.cyan(`🚀 Swap Tx Sent! ${TX_EXPLORER}${tx.hash}`));
+  console.log(chalk.cyan(`Swapping [${tokenA.name} -> ${tokenB.name}]...`));
+  console.log(chalk.cyan(`Swap Tx Sent! ${TX_EXPLORER}${tx.hash}`));
   const receipt = await tx.wait();
-  console.log(chalk.cyan(`✅ Tx Confirmed in Block ${receipt.blockNumber}`));
+  console.log(chalk.cyan(`Tx Confirmed in Block ${receipt.blockNumber}`));
 }
 
 async function main() {
   clear();
   console.log(chalk.green.bold("🤖 BeanSwap Random Swaps 🤖"));
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  
   for (const w of wallets) {
     const wallet = new ethers.Wallet(w.privateKey, provider);
     console.log(chalk.yellow(`\nWallet [${wallet.address}]`));
     const swapsToDo = getRandomInt(5, 10);
-    console.log(chalk.cyan(`👉 Performing ${swapsToDo} random swaps...`));
-    
+    console.log(chalk.cyan(`Performing ${swapsToDo} random swaps...`));
     let usedTokenB = [];
-    
     for (let i = 1; i <= swapsToDo; i++) {
       console.log(chalk.magenta(`\n[Swap #${i}]`));
       let tokensWithBalance = [];
@@ -167,7 +181,6 @@ async function main() {
         const bal = Number(balStr);
         if (bal > 0) tokensWithBalance.push(token);
       }
-      
       let tokenA, tokenB;
       const onlyMONWMON =
         tokensWithBalance.length === 2 &&
@@ -200,31 +213,29 @@ async function main() {
         }
         tokenB = tokensForB[getRandomInt(0, tokensForB.length - 1)];
       }
-      
       usedTokenB.push(tokenB.name);
       if (usedTokenB.length > 2) usedTokenB.shift();
-      
-      const balanceAString = await getTokenBalance(provider, wallet.address, tokenA);
-      const balanceA = Number(balanceAString);
-      let swapAmountFormatted;
-      if (tokenA.name === "MON" || tokenA.name === "WMON") {
-        const minVal = 0.02, maxVal = 0.1;
-        const randomVal = (Math.random() * (maxVal - minVal)) + minVal;
-        swapAmountFormatted = randomVal.toFixed(3);
-      } else {
-        const fraction = getRandomInt(10, 30) / 100;
-        const swapAmount = balanceA * fraction;
-        swapAmountFormatted = formatAmount(swapAmount);
-      }
-      
-      console.log(chalk.blue(`Swapping [${tokenA.name}] amount: ${swapAmountFormatted} ${tokenA.name}`));
-      
+      console.log(chalk.blue(`Swapping from [${tokenA.name}]...`));
       const balanceA_Before = await getTokenBalance(provider, wallet.address, tokenA);
       const balanceB_Before = await getTokenBalance(provider, wallet.address, tokenB);
       console.log(chalk.gray(`Before Swap - [${tokenA.name}]: ${balanceA_Before}`));
       console.log(chalk.gray(`Before Swap - [${tokenB.name}]: ${balanceB_Before}`));
-      
       try {
+        let swapAmountFormatted;
+        if (tokenA.native && !tokenB.native) {
+          const minVal = 0.02, maxVal = 0.1;
+          const randomVal = (Math.random() * (maxVal - minVal)) + minVal;
+          swapAmountFormatted = randomVal.toFixed(3);
+        } else if (!tokenA.native && tokenB.native) {
+          const balanceA = Number(await getTokenBalance(provider, wallet.address, tokenA));
+          const fraction = getRandomInt(50, 70) / 100;
+          swapAmountFormatted = formatAmount(balanceA * fraction);
+        } else {
+          const balanceA = Number(await getTokenBalance(provider, wallet.address, tokenA));
+          const fraction = getRandomInt(10, 30) / 100;
+          swapAmountFormatted = formatAmount(balanceA * fraction);
+        }
+        console.log(chalk.blue(`Swapping amount: ${swapAmountFormatted} ${tokenA.name}`));
         await performSwap(wallet, tokenA, tokenB, swapAmountFormatted, provider);
       } catch (err) {
         if (err.code === "CALL_EXCEPTION") {
@@ -234,16 +245,14 @@ async function main() {
         }
         continue;
       }
-      
       const balanceA_After = await getTokenBalance(provider, wallet.address, tokenA);
       const balanceB_After = await getTokenBalance(provider, wallet.address, tokenB);
       console.log(chalk.gray(`After Swap - [${tokenA.name}]: ${balanceA_After}`));
       console.log(chalk.gray(`After Swap - [${tokenB.name}]: ${balanceB_After}`));
-      
       await sleep(2000);
     }
   }
-  console.log(chalk.green.bold("\n✅ All random swaps completed!"));
+  console.log(chalk.green.bold("\nAll random swaps completed!"));
 }
 
 main().catch((error) => {

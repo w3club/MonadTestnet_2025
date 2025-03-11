@@ -45,6 +45,7 @@ MonadTestnet/
 │   │   ├── liquidity.js              # To be implemented – Script for managing liquidity operations.
 │   │   ├── perps.js                  # To be implemented – Script for handling perpetual contracts trading.
 │   │   └── random.js                 # Random swap script for BeanSwap (performs random swaps automatically).
+│   │   └── liquidate.js              # Dedicated script to swap all available tokens back to MON
 │   ├── Kintzu/
 │   │   ├── index.js                  # Main script for the Kintzu module (to be implemented).
 │   │   └── ABI.js                    # ABI definitions for Kintzu contracts (to be implemented).
@@ -73,6 +74,7 @@ MonadTestnet/
 │   │   ├── basicSwap.js              # Basic swap script prompting for all required swap details.
 │   │   ├── dev.js                    # Script for token deployment and insider buying transactions.
 │   │   ├── snipe.js                  # Script that continuously monitors for recently launched tokens to auto buy/sell.
+│   │   ├── liquidate.js              # similar to swap.js but this code ask you to prompt contracts of the tokens you bought and sell in all the wallets for MON
 │   │   ├── swap.js                   # Script to manage swap operations (buying/selling) of tokens.
 │   │   ├── tokens.json               # Stores records of purchased tokens (contract address, wallet IDs, timestamp, purchase price).
 │   │   ├── help.txt                  # Documentation file with descriptions and instructions for Nad.Fun module files.
@@ -140,6 +142,5 @@ Good Luck! :)
 
 ## Notes
 
-1. Kintzu is added but can't unstake MON if someone knows what's the function corresponding to methodID: "0x30af6b2e" let me know so I can add unstake MON
-2. dev.js & launch.js on KuruSwap will be live very shortly
-3. NostraFinance currently just has available Deposit assets + Borrow (will be done shortly)
+1. Added liquidate.js on BeanSwap & Nad.Fun that check all the wallets and check any existing Token Balance if any amount is found it swaps back to MON + Added YAKI + CHOG on BeanSwap
+(KuruSwap has a few issues when selling tokens so to avoid failed tx's use BeanSwap) - Improved random & basic swaps & bugs solved
