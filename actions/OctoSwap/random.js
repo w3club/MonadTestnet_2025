@@ -10,6 +10,7 @@ const {
   USDT_CONTRACT,
   TEST1_CONTRACT,
   TEST2_CONTRACT,
+  DAK_CONTRACT,
   ABI
 } = require("./ABI");
 
@@ -17,6 +18,7 @@ const availableTokens = {
   MON:   { name: "MON",   address: null,           decimals: 18, native: true  },
   WMON:  { name: "WMON",  address: WMON_CONTRACT,  decimals: 18, native: false },
   USDC:  { name: "USDC",  address: USDC_CONTRACT,  decimals: 6,  native: false },
+  DAK:   { name: "DAK",   address: DAK_CONTRACT,   decimals: 18, native: false },
   USDT:  { name: "USDT",  address: USDT_CONTRACT,  decimals: 6,  native: false },
   TEST1: { name: "TEST1", address: TEST1_CONTRACT, decimals: 18, native: false },
   TEST2: { name: "TEST2", address: TEST2_CONTRACT, decimals: 18, native: false }

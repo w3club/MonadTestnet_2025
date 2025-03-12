@@ -7,18 +7,20 @@ const {
   USDT_CONTRACT, 
   TEST1_CONTRACT, 
   TEST2_CONTRACT,
+  DAK_CONTRACT,
   ABI
 } = require("./ABI");
 const { RPC_URL, TX_EXPLORER } = require("../../utils/chain");
 const wallets = require("../../utils/wallets.json");
 
 const availableTokens = {
-  MON:   { name: "MON",   address: null,              decimals: 18, native: true  },
-  WMON:  { name: "WMON",  address: WMON_CONTRACT,     decimals: 18, native: false },
-  USDC:  { name: "USDC",  address: USDC_CONTRACT,     decimals: 6,  native: false },
-  USDT:  { name: "USDT",  address: USDT_CONTRACT,     decimals: 6,  native: false },
-  TEST1: { name: "TEST1", address: TEST1_CONTRACT,    decimals: 18, native: false },
-  TEST2: { name: "TEST2", address: TEST2_CONTRACT,    decimals: 18, native: false }
+  MON:   { name: "MON",   address: null,           decimals: 18, native: true  },
+  WMON:  { name: "WMON",  address: WMON_CONTRACT,  decimals: 18, native: false },
+  USDC:  { name: "USDC",  address: USDC_CONTRACT,  decimals: 6,  native: false },
+  DAK:   { name: "DAK",   address: DAK_CONTRACT,   decimals: 18, native: false },
+  USDT:  { name: "USDT",  address: USDT_CONTRACT,  decimals: 6,  native: false },
+  TEST1: { name: "TEST1", address: TEST1_CONTRACT, decimals: 18, native: false },
+  TEST2: { name: "TEST2", address: TEST2_CONTRACT, decimals: 18, native: false }
 };
 
 function sleep(ms) {
@@ -53,7 +55,7 @@ async function approveTokenIfNeeded(wallet, token, amount, routerAddress) {
     const gasLimitForApprove = getRandomInt(250000, 350000);
     console.log(chalk.magenta(`🔑 [APPROVAL] Approving ${token.name}...`));
     await tokenContract.approve(routerAddress, ethers.constants.MaxUint256, { gasLimit: gasLimitForApprove });
-    await sleep(1000);
+    await sleep(2000);
     console.log(chalk.magenta(`✅ [APPROVAL] ${token.name} approved.`));
   }
 }

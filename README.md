@@ -89,6 +89,7 @@ MonadTestnet/
 │   │   ├── ABI.js            # Exports ABI definitions for OctoSwap's router, liquidity, random swap, and swap contracts.
 │   │   ├── liquidity.js      # (To be implemented) Script for managing liquidity operations on OctoSwap.
 │   │   ├── random.js         # Random swap script for OctoSwap (performs random swaps automatically under custom rules).
+│   │   ├── liquidate.js      # Dedicated script to swap all available tokens back to MON.
 │   │   └── swap.js           # Interactive swap script for OctoSwap with token approvals, dynamic gas settings, and support for MON/WMON wrapping/unwrapping.
 │   ├── Magma/                # New Module: Magma
 │   │   ├── index.js          # Main script for the Magma module; handles core functionalities for Magma-related actions.
