@@ -241,16 +241,20 @@ async function mainMenu() {
             message: 'Select swap mode for OctoSwap:',
             choices: [
               { name: '1. Manual Swaps', value: 'manual' },
-              { name: '2. Automatic Swaps', value: 'automatic' }
+              { name: '2. Automatic Swaps', value: 'automatic' },
+              { name: '3. Swap all assets for MON', value: 'liquidateOcto' }
             ],
           },
         ]);
         if (octoSwapMode === 'manual') {
           console.log('Launching Manual OctoSwap...'.green);
           await runScript('actions/OctoSwap/swap.js');
-        } else {
+        } else if (octoSwapMode === 'automatic') {
           console.log('Launching Automatic OctoSwap...'.green);
           await runScript('actions/OctoSwap/random.js');
+        } else if (octoSwapMode === 'liquidateOcto') {
+          console.log('Swapping all assets for MON via OctoSwap...'.green);
+          await runScript('actions/OctoSwap/liquidate.js');
         }
       }
       await pause();

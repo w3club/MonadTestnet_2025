@@ -66,7 +66,7 @@ async function performLiquidationSwap(wallet, fromToken, targetToken, provider) 
   const currentTime = Math.floor(Date.now() / 1000);
   const deadline = currentTime + 6 * 3600;
 
-  // Get full balance (for native tokens, reserve 0.005 for gas)
+  // Obtener balance completo (para tokens nativos, reservar 0.005 para gas)
   let balanceStr = await getTokenBalance(provider, wallet.address, fromToken);
   let amountIn;
   if (fromToken.native) {
@@ -82,7 +82,7 @@ async function performLiquidationSwap(wallet, fromToken, targetToken, provider) 
     await approveTokenIfNeeded(wallet, fromToken, amountIn, ROUTER_CONTRACT);
   }
 
-  // Special case: WMON -> MON uses withdraw
+  // Caso especial: WMON -> MON usa withdraw
   if (!fromToken.native && targetToken.native && fromToken.name === "WMON") {
     const wmonContract = new ethers.Contract(WMON_CONTRACT, ["function withdraw(uint256)"], wallet);
     const tx = await wmonContract.withdraw(amountIn, { gasLimit: randomGasLimit });
@@ -90,7 +90,7 @@ async function performLiquidationSwap(wallet, fromToken, targetToken, provider) 
     return { txHash: tx.hash, blockNumber: receipt.blockNumber };
   }
 
-  // Define swap path for other cases
+  // Definir ruta de swap para otros casos
   let path = [];
   if (fromToken.native && !targetToken.native) {
     path.push(WMON_CONTRACT);
@@ -155,7 +155,7 @@ async function liquidateWallet(wallet, provider, targetToken) {
     let token = availableTokens[key];
     if (token.name === targetToken.name) continue;
     let balanceBefore = await getTokenBalance(provider, wallet.address, token);
-    // Skip tokens with zero balance
+    // Saltar tokens con balance cero
     if (Number(balanceBefore) === 0) continue;
 
     let targetBalanceBefore = await getTokenBalance(provider, wallet.address, targetToken);
@@ -173,7 +173,14 @@ async function liquidateWallet(wallet, provider, targetToken) {
         console.log(chalk.red(`Swap could not be executed for ${token.name} -> ${targetToken.name}.`));
       }
     } catch (err) {
-      console.error(chalk.red(`Liquidation swap failed for ${token.name} -> ${targetToken.name}: ${err.message}`));
+      if (err.message.includes("Signer had insufficient balance")) {
+        console.error(chalk.red("Swap can't be processed becuase wallet is out of Funds"));
+      } else if (err.message.includes("CALL_EXCEPTION")) {
+        console.error(chalk.red("Transaction Failed with CALL_EXCEPTION"));
+      } else {
+        console.error(chalk.red(`Liquidation swap failed for ${token.name} -> ${targetToken.name}: ${err.message}`));
+      }
+      await sleep(2000);
       continue;
     }
 
@@ -183,13 +190,14 @@ async function liquidateWallet(wallet, provider, targetToken) {
     console.log(chalk.magenta(`Balance ${token.name} after Swap - [${balanceAfter}]`));
     console.log(chalk.magenta(`Balance ${targetToken.name} after Swap - [${targetBalanceAfter}]\n`));
 
+    // Demora de 2 segundos entre cada swap
     await sleep(2000);
   }
 }
 
 async function main() {
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  // Target token fixed to MON
+  // Token objetivo fijado a MON
   const targetToken = availableTokens.MON;
   for (let w of wallets) {
     const wallet = new ethers.Wallet(w.privateKey, provider);
