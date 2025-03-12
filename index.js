@@ -270,7 +270,8 @@ async function mainMenu() {
           choices: [
             { name: '1. Multipli', value: 'multipli' },
             { name: '2. Apriori', value: 'apriori' },
-            { name: '3. Kintzu', value: 'kintzu' }
+            { name: '3. Kintzu', value: 'kintzu' },
+            { name: '4. Magma', value: 'magma' }
           ],
         },
       ]);
@@ -286,6 +287,10 @@ async function mainMenu() {
         case 'kintzu':
           console.log('Launching Kintzu...'.green);
           await runScript('actions/Kintzu/index.js');
+          break;
+        case 'magma':
+          console.log('Launching Magma...'.green);
+          await runScript('actions/Magma/index.js');
           break;
         default:
           console.log('Invalid option, coming soon...'.green);
