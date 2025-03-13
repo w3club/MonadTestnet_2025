@@ -1,5 +1,5 @@
 module.exports = {
-  RPC_URL: "https://monad-testnet.g.alchemy.com/v2/1FZBHN6r37BItMcVhvyS_kAr3lRv2-UI",
+  RPC_URL: "https://monad-testnet.drpc.org",
   CHAIN_ID: 10143,
   SYMBOL: "MON",
   TX_EXPLORER: "https://testnet.monadexplorer.com/tx/",
