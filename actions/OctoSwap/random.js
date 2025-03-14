@@ -237,11 +237,24 @@ async function chooseSwapAmount(tokenA, tokenB, provider, walletAddress) {
   return "0.01";
 }
 
+// Función para barajar (shuffle) un array usando el algoritmo de Fisher-Yates
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 async function main() {
   clear();
-  console.log(chalk.cyan.bold("🐙 OctoSwap Random Swaps - New Requirements 🐙"));
+  console.log(chalk.cyan.bold("🐙 OctoSwap Random Swaps 🐙"));
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  for (const w of wallets) {
+
+  // Barajar las wallets para usarlas en orden aleatorio (asegurándose de usarlas todas)
+  const shuffledWallets = shuffle([...wallets]);
+
+  for (const w of shuffledWallets) {
     const wallet = new ethers.Wallet(w.privateKey, provider);
     console.log(chalk.yellow(`\nWallet [${wallet.address}]`));
     const swapsToDo = getRandomInt(5, 10);
@@ -279,7 +292,7 @@ async function main() {
         await performSwap(wallet, tokenA, tokenB, swapAmountFormatted, provider);
       } catch (err) {
         if (err.code === "CALL_EXCEPTION") {
-          console.log(chalk.red("CALL_EXCEPTION occurred. Check inputs and try again."));
+          console.log(chalk.red("Transaction Failed due to CALL_EXCEPTION"));
         } else {
           console.log(chalk.red(`Swap failed: ${err.message}`));
         }

@@ -20,8 +20,8 @@ const {
   PRICE_ORACLE_CONTRACT_ADDRESS
 } = require('./ABI');
 
-// Importar la función getSignatureToBuy desde scripts/apis.js
-const { getSignatureToBuy } = require('./scripts/apis');
+// Importar funciones de APIs: getSignatureToBuy y generateNames
+const { getSignatureToBuy, generateNames } = require('./scripts/apis');
 
 // Función auxiliar para obtener la configuración de gas
 async function getGasConfig(provider) {
@@ -104,8 +104,21 @@ async function registerDomain(selectedWallets) {
       ]);
       domainName = userInput.trim();
     } else {
-      console.log(chalk.yellow("Domain generator coming soon..."));
-      return; // Se finaliza el flujo, ya que aún no se implementa la generación automática
+      console.log(chalk.yellow("Generating domain name automatically..."));
+      try {
+        const names = await generateNames();
+        if (names && names.length > 0) {
+          // Seleccionar uno aleatoriamente
+          domainName = names[Math.floor(Math.random() * names.length)];
+          console.log(chalk.green(`Generated domain name: ${domainName}`));
+        } else {
+          console.log(chalk.red("No names were generated, aborting domain registration."));
+          return;
+        }
+      } catch (error) {
+        console.error(chalk.red("Error generating domain name automatically:"), error);
+        return;
+      }
     }
 
     // Verificar disponibilidad del dominio usando isNameAvailable

@@ -95,15 +95,15 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
   path.push(tokenB.native ? WMON_CONTRACT : tokenB.address);
   let amountIn;
   if (tokenA.native && !tokenB.native) {
-    // MON → TOKEN: use fixed random amount (unchanged)
+    // MON → TOKEN: se usa un monto fijo aleatorio (sin cambios)
     amountIn = ethers.utils.parseEther(swapAmountInput);
   } else if (!tokenA.native && tokenB.native) {
-    // TOKEN → MON: use 50-70% of tokenA balance
+    // TOKEN → MON: se usa entre 50-70% del balance de tokenA
     const balanceA = await getTokenBalance(provider, wallet.address, tokenA);
     const fraction = getRandomInt(50, 70) / 100;
     amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toString(), tokenA.decimals);
   } else if (!tokenA.native && !tokenB.native) {
-    // TOKEN → TOKEN: use 10-30% of tokenA balance
+    // TOKEN → TOKEN: se usa entre 10-30% del balance de tokenA
     const balanceA = await getTokenBalance(provider, wallet.address, tokenA);
     const fraction = getRandomInt(10, 30) / 100;
     amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toString(), tokenA.decimals);
@@ -162,11 +162,24 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
   console.log(chalk.cyan(`Tx Confirmed in Block ${receipt.blockNumber}`));
 }
 
+// Función para barajar (shuffle) un array usando el algoritmo de Fisher-Yates
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 async function main() {
   clear();
   console.log(chalk.green.bold("🤖 BeanSwap Random Swaps 🤖"));
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  for (const w of wallets) {
+
+  // Barajamos las wallets para usarlas en orden aleatorio (asegurando usar todas)
+  const shuffledWallets = shuffle([...wallets]);
+
+  for (const w of shuffledWallets) {
     const wallet = new ethers.Wallet(w.privateKey, provider);
     console.log(chalk.yellow(`\nWallet [${wallet.address}]`));
     const swapsToDo = getRandomInt(5, 10);

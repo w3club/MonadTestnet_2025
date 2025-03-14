@@ -156,23 +156,36 @@ async function main() {
   console.log(chalk.blue(`MINT_PRICE is set to - [${ethers.utils.formatEther(mintPrice)}] MON`));
 
   let startTime;
+  let scheduledDate;
   if (inputResponses.mintOption === "Scheduled Mint") {
     if (finalConfig && !finalConfig.publicStage.startTime.eq(0)) {
       startTime = finalConfig.publicStage.startTime.toNumber();
+      scheduledDate = new Date(startTime * 1000);
     } else {
       const timeInput = await inquirer.prompt([
-        { type: "input", name: "hours", message: "Please Insert the time left for Mint\nHours:" },
-        { type: "input", name: "minutes", message: "Minutes:" },
-        { type: "input", name: "seconds", message: "Seconds:" }
+        { type: "input", name: "hour", message: "Please Insert Minting Start Time (in UTC format)\nHour (24h):" },
+        { type: "input", name: "minute", message: "Minute:" },
+        { type: "input", name: "second", message: "Second:" }
       ]);
-      const delaySeconds = Number(timeInput.hours) * 3600 + Number(timeInput.minutes) * 60 + Number(timeInput.seconds);
-      startTime = Math.floor(Date.now() / 1000) + delaySeconds;
+      const currentDate = new Date();
+      scheduledDate = new Date(Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate(),
+        Number(timeInput.hour),
+        Number(timeInput.minute),
+        Number(timeInput.second)
+      ));
+      // Si el horario ya pasó en el día actual, se programa para el día siguiente.
+      if (scheduledDate.getTime() <= currentDate.getTime()) {
+         scheduledDate.setUTCDate(scheduledDate.getUTCDate() + 1);
+      }
+      startTime = Math.floor(scheduledDate.getTime() / 1000);
     }
 
     const currentTime = Math.floor(Date.now() / 1000);
     if (currentTime < startTime) {
       const delay = (startTime - currentTime) * 1000;
-      const scheduledDate = new Date(startTime * 1000);
       const formattedTime = formatTimeComponents(scheduledDate);
       const formattedDate = formatDateComponents(scheduledDate);
       console.log(chalk.yellow("Scheduling Mint..."));
