@@ -64,26 +64,19 @@ async function selectWallets() {
       .filter(id => !isNaN(id));
     selectedWallets = wallets.filter(wallet => idArray.includes(wallet.id));
   }
-  return selectedWallets;
+  return { walletSelection, selectedWallets };
 }
 
 // Opción 1: Registrar un dominio
-async function registerDomain(selectedWallets) {
+async function registerDomain(selectedWallets, walletSelectionType) {
   // Crear provider para la red
   const provider = new ethers.providers.JsonRpcProvider(chain.RPC_URL);
   // Obtener configuración de gas (la misma para las transacciones de registro y setPrimary)
   const gasConfig = await getGasConfig(provider);
 
-  for (const walletData of selectedWallets) {
-    // Crear signer para la wallet
-    const walletSigner = new ethers.Wallet(walletData.privateKey, provider);
-
-    // Instanciar contratos necesarios
-    const registrationContract = new ethers.Contract(REGISTRATION_CONTRACT_ADDRESS, RegistrationABI, walletSigner);
-    const nameManagerContract = new ethers.Contract(NAME_MANAGER_CONTRACT_ADDRESS, NameManagerABI, provider);
-    const priceOracleContract = new ethers.Contract(PRICE_ORACLE_CONTRACT_ADDRESS, PriceOracleABI, provider);
-
-    // Preguntar si se desea establecer manualmente el nombre
+  // Si se usan "All wallets", preguntar SOLO una vez si se desea ingresar manualmente el nombre
+  let manualChoice;
+  if (walletSelectionType === 'all') {
     const { manual } = await inquirer.prompt([
       {
         type: 'confirm',
@@ -92,32 +85,83 @@ async function registerDomain(selectedWallets) {
         default: false,
       }
     ]);
+    manualChoice = manual;
+  }
+
+  // Si se usan "All wallets", se mezcla el orden de las wallets
+  if (walletSelectionType === 'all') {
+    selectedWallets.sort(() => Math.random() - 0.5);
+  }
+
+  for (const walletData of selectedWallets) {
+    // Crear signer para la wallet
+    const walletSigner = new ethers.Wallet(walletData.privateKey, provider);
+    // Instanciar contratos necesarios
+    const registrationContract = new ethers.Contract(REGISTRATION_CONTRACT_ADDRESS, RegistrationABI, walletSigner);
+    const nameManagerContract = new ethers.Contract(NAME_MANAGER_CONTRACT_ADDRESS, NameManagerABI, provider);
+    const priceOracleContract = new ethers.Contract(PRICE_ORACLE_CONTRACT_ADDRESS, PriceOracleABI, provider);
 
     let domainName;
-    if (manual) {
-      const { userInput } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'userInput',
-          message: 'Please enter your wished username:',
-        }
-      ]);
-      domainName = userInput.trim();
-    } else {
-      console.log(chalk.yellow("Generating domain name automatically..."));
-      try {
-        const names = await generateNames();
-        if (names && names.length > 0) {
-          // Seleccionar uno aleatoriamente
-          domainName = names[Math.floor(Math.random() * names.length)];
-          console.log(chalk.green(`Generated domain name: ${domainName}`));
-        } else {
-          console.log(chalk.red("No names were generated, aborting domain registration."));
+    if (walletSelectionType === 'all') {
+      if (manualChoice) {
+        const { userInput } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'userInput',
+            message: `Please enter your wished username for wallet [${walletData.address}]:`,
+          }
+        ]);
+        domainName = userInput.trim();
+      } else {
+        console.log(chalk.yellow("Generating domain name automatically..."));
+        try {
+          const names = await generateNames();
+          if (names && names.length > 0) {
+            domainName = names[Math.floor(Math.random() * names.length)];
+            console.log(chalk.green(`Generated domain name: ${domainName}`));
+          } else {
+            console.log(chalk.red("No names were generated, aborting domain registration."));
+            return;
+          }
+        } catch (error) {
+          console.error(chalk.red("Error generating domain name automatically:"), error);
           return;
         }
-      } catch (error) {
-        console.error(chalk.red("Error generating domain name automatically:"), error);
-        return;
+      }
+    } else {
+      // Para wallets específicas, se pregunta individualmente
+      const { manual } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'manual',
+          message: 'Would you like to set domain name manually for this wallet? (y/n)',
+          default: false,
+        }
+      ]);
+      if (manual) {
+        const { userInput } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'userInput',
+            message: 'Please enter your wished username:',
+          }
+        ]);
+        domainName = userInput.trim();
+      } else {
+        console.log(chalk.yellow("Generating domain name automatically..."));
+        try {
+          const names = await generateNames();
+          if (names && names.length > 0) {
+            domainName = names[Math.floor(Math.random() * names.length)];
+            console.log(chalk.green(`Generated domain name: ${domainName}`));
+          } else {
+            console.log(chalk.red("No names were generated, aborting domain registration."));
+            return;
+          }
+        } catch (error) {
+          console.error(chalk.red("Error generating domain name automatically:"), error);
+          return;
+        }
       }
     }
 
@@ -187,7 +231,7 @@ async function registerDomain(selectedWallets) {
       });
       console.log(chalk.magenta(`🚀 Registration Tx Sent! - [${chain.TX_EXPLORER}${tx.hash}]`));
       const receipt = await tx.wait();
-      console.log(chalk.blue(`✅ Tx Confirmed in Block - [${receipt.blockNumber}]`));
+      console.log(chalk.blue(`✅ Tx Confirmed in Block - [${receipt.blockNumber}]\n`));
     } catch (err) {
       console.error("Error during registration transaction:", err);
     }
@@ -202,7 +246,7 @@ async function checkOwnedDomains(selectedWallets) {
   for (const walletData of selectedWallets) {
     try {
       const names = await nameManagerContract.getNamesOfAddress(walletData.address);
-      console.log(chalk.blue(`📂 Wallet - [${walletData.address}] Currently owns following domains:`));
+      console.log(chalk.blue(`📂 Wallet - [${walletData.address}] Currently owns the following domains:`));
       names.forEach(name => {
         console.log(chalk.green(`🔹 ${name}.nad`));
       });
@@ -269,10 +313,10 @@ async function main() {
     }
   ]);
 
-  const selectedWallets = await selectWallets();
+  const { walletSelection, selectedWallets } = await selectWallets();
 
   if (action === 'register') {
-    await registerDomain(selectedWallets);
+    await registerDomain(selectedWallets, walletSelection);
   } else if (action === 'check') {
     await checkOwnedDomains(selectedWallets);
   } else if (action === 'setPrimary') {
