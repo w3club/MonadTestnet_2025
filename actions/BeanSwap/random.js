@@ -101,12 +101,14 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
     // TOKEN → MON: se usa entre 50-70% del balance de tokenA
     const balanceA = await getTokenBalance(provider, wallet.address, tokenA);
     const fraction = getRandomInt(50, 70) / 100;
-    amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toString(), tokenA.decimals);
+    // Se redondea a la cantidad correcta de decimales
+    amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toFixed(tokenA.decimals), tokenA.decimals);
   } else if (!tokenA.native && !tokenB.native) {
     // TOKEN → TOKEN: se usa entre 10-30% del balance de tokenA
     const balanceA = await getTokenBalance(provider, wallet.address, tokenA);
     const fraction = getRandomInt(10, 30) / 100;
-    amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toString(), tokenA.decimals);
+    // Se redondea a la cantidad correcta de decimales
+    amountIn = ethers.utils.parseUnits((Number(balanceA) * fraction).toFixed(tokenA.decimals), tokenA.decimals);
   } else {
     amountIn = ethers.utils.parseEther(swapAmountInput);
   }
@@ -252,7 +254,7 @@ async function main() {
         await performSwap(wallet, tokenA, tokenB, swapAmountFormatted, provider);
       } catch (err) {
         if (err.code === "CALL_EXCEPTION") {
-          console.log(chalk.red("CALL_EXCEPTION occurred. Please check your inputs and try again."));
+          console.log(chalk.red("Swap Failed cause CALL_EXCEPTION"));
         } else {
           console.log(chalk.red(`Swap failed: ${err.message}`));
         }

@@ -105,6 +105,7 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
   if (tokenA.native) {
     amountIn = ethers.utils.parseEther(swapAmountInput);
   } else {
+    // Aquí asumimos que el valor de swapAmountInput ya viene truncado a los decimales correctos
     amountIn = ethers.utils.parseUnits(swapAmountInput, tokenA.decimals);
   }
   const amountsOut = await routerContract.getAmountsOut(amountIn, path);
@@ -131,10 +132,13 @@ async function performSwap(wallet, tokenA, tokenB, swapAmountInput, provider) {
   };
   let tx;
   if (tokenA.native) {
-    tx = await routerContract.swapExactETHForTokens(expectedOut, path, wallet.address, deadline, {
-      value: amountIn,
-      ...txOverrides
-    });
+    tx = await routerContract.swapExactETHForTokens(
+      expectedOut,
+      path,
+      wallet.address,
+      deadline,
+      { value: amountIn, ...txOverrides }
+    );
   } else if (tokenB.native) {
     tx = await routerContract.swapExactTokensForETH(amountIn, expectedOut, path, wallet.address, deadline, txOverrides);
   } else {
@@ -185,9 +189,7 @@ function pickRandomSwap(tokensWithBalance, lastSwap) {
     const notAllowed = ["WMON", tokenA.name];
     possibleTargets = tokensWithBalance.filter(t => !notAllowed.includes(t.name));
     if (possibleTargets.length === 0) {
-      possibleTargets = Object.values(availableTokens).filter(
-        x => !notAllowed.includes(x.name)
-      );
+      possibleTargets = Object.values(availableTokens).filter(x => !notAllowed.includes(x.name));
     }
   }
   if (lastSwap) {
@@ -201,12 +203,14 @@ function pickRandomSwap(tokensWithBalance, lastSwap) {
 }
 
 async function chooseSwapAmount(tokenA, tokenB, provider, walletAddress) {
+  // Para swaps de MON o cuando se convierte a WMON se usa un valor aleatorio fijo
   if (tokenA.native && tokenB.name !== "WMON") {
     const minVal = 0.02;
     const maxVal = 0.08;
     const randomVal = (Math.random() * (maxVal - minVal)) + minVal;
     return randomVal.toFixed(5);
   }
+  // Para TOKEN -> MON o TOKEN -> TOKEN se toma un porcentaje del balance
   if (!tokenA.native && tokenB.native && tokenA.name !== "WMON") {
     const balStr = await getTokenBalance(provider, walletAddress, tokenA);
     const balNum = Number(balStr);
@@ -237,7 +241,6 @@ async function chooseSwapAmount(tokenA, tokenB, provider, walletAddress) {
   return "0.01";
 }
 
-// Función para barajar (shuffle) un array usando el algoritmo de Fisher-Yates
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -292,7 +295,7 @@ async function main() {
         await performSwap(wallet, tokenA, tokenB, swapAmountFormatted, provider);
       } catch (err) {
         if (err.code === "CALL_EXCEPTION") {
-          console.log(chalk.red("Transaction Failed due to CALL_EXCEPTION"));
+          console.log(chalk.red("Swap Failed cause CALL_EXCEPTION"));
         } else {
           console.log(chalk.red(`Swap failed: ${err.message}`));
         }
